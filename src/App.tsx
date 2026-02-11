@@ -47,6 +47,7 @@ interface PinnedPage {
   label: string
   url: string
   icon: React.ReactNode
+  group?: string
 }
 
 const defaultPinnedPages: PinnedPage[] = [
@@ -157,14 +158,46 @@ function PinnedNavItem({ item, isActive, isCollapsed, onNavigate, onRemove }: {
 }
 
 // ─── Sidebar ────────────────────────────────────────────────
-function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, onRemovePinned }: {
+function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, onRemovePinned, onPinUrl, onGroupTabs }: {
   isCollapsed: boolean
   activePage: string
   onToggle: () => void
   onNavigate: (id: string) => void
   pinnedPages: PinnedPage[]
   onRemovePinned: (id: string) => void
+  onPinUrl: () => void
+  onGroupTabs: () => void
 }) {
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!moreMenuOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) setMoreMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [moreMenuOpen])
+
+  const toggleSection = (name: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+  }
+
+  // Derive grouped and ungrouped pages
+  const ungroupedPages = pinnedPages.filter(p => !p.group)
+  const groupNames = [...new Set(pinnedPages.filter(p => p.group).map(p => p.group!))]
+  const groupedPages = groupNames.map(name => ({
+    name,
+    pages: pinnedPages.filter(p => p.group === name),
+  }))
+
   return (
     <aside className={`sidebar-transition ${isCollapsed ? 'w-[72px]' : 'w-[200px]'} glass-subtle flex flex-col justify-between relative z-20 flex-shrink-0`}>
       <div>
@@ -211,8 +244,8 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, o
           {/* Divider before pinned pages */}
           {pinnedPages.length > 0 && <div className="h-px w-full bg-[#30BAFF]/5 my-2" />}
 
-          {/* Pinned pages */}
-          {pinnedPages.map((item) => (
+          {/* Ungrouped pinned pages */}
+          {ungroupedPages.map((item) => (
             <PinnedNavItem
               key={item.id}
               item={item}
@@ -223,14 +256,77 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, o
             />
           ))}
 
+          {/* Grouped sections */}
+          {groupedPages.map(({ name, pages }) => (
+            <div key={name}>
+              <button
+                onClick={() => toggleSection(name)}
+                className="w-full flex items-center gap-1.5 px-3 py-1.5 mt-1 text-gray-600 hover:text-gray-400 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`w-3 h-3 flex-shrink-0 transition-transform duration-200 ${collapsedSections.has(name) ? '-rotate-90' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+                {!isCollapsed && (
+                  <span className="font-mono text-[9px] tracking-[0.15em] uppercase flex-1 text-left">{name}</span>
+                )}
+                {!isCollapsed && (
+                  <span className="font-mono text-[9px] text-gray-700">{pages.length}</span>
+                )}
+              </button>
+              {!collapsedSections.has(name) && pages.map((item) => (
+                <PinnedNavItem
+                  key={item.id}
+                  item={item}
+                  isActive={activePage === item.id}
+                  isCollapsed={isCollapsed}
+                  onNavigate={onNavigate}
+                  onRemove={onRemovePinned}
+                />
+              ))}
+            </div>
+          ))}
+
           <div className="h-px w-full bg-[#30BAFF]/5 my-3" />
 
-          <button className="group flex items-center px-3 py-2.5 rounded-lg text-gray-600 hover:bg-[#30BAFF]/5 hover:text-[#30BAFF] transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-            </svg>
-            {!isCollapsed && <span className="ml-3 font-tech font-medium text-[15px] fade-text tracking-wide">More</span>}
-          </button>
+          <div className="relative" ref={moreMenuRef}>
+            <button
+              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+              className="w-full group flex items-center px-3 py-2.5 rounded-lg text-gray-600 hover:bg-[#30BAFF]/5 hover:text-[#30BAFF] transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+              {!isCollapsed && <span className="ml-3 font-tech font-medium text-[15px] fade-text tracking-wide">More</span>}
+            </button>
+
+            {moreMenuOpen && (
+              <div className="absolute left-0 bottom-full mb-2 w-52 rounded-lg bg-[#0c1424] border border-white/[0.1] shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-dropdown-in">
+                <button
+                  onClick={() => { onPinUrl(); setMoreMenuOpen(false) }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-gray-400 hover:text-white hover:bg-[#30BAFF]/5 transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                  </svg>
+                  <span className="font-tech text-xs tracking-wide">Pin a URL</span>
+                </button>
+                <div className="h-px bg-white/[0.06]" />
+                <button
+                  onClick={() => { onGroupTabs(); setMoreMenuOpen(false) }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-gray-400 hover:text-white hover:bg-[#30BAFF]/5 transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                  </svg>
+                  <span className="font-tech text-xs tracking-wide">Group Tabs</span>
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 
@@ -431,6 +527,166 @@ function AddPortalModal({ onAdd, onClose, portalCount }: { onAdd: (p: Portal) =>
               className="px-5 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] text-xs font-tech font-semibold tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all press-scale disabled:opacity-30 disabled:pointer-events-none"
             >
               Connect Portal
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Add Pinned Page Modal ──────────────────────────────────
+function AddPinnedPageModal({ onAdd, onClose }: { onAdd: (label: string, url: string) => void; onClose: () => void }) {
+  const [name, setName] = useState('')
+  const [url, setUrl] = useState('')
+
+  const handleAdd = () => {
+    if (!name.trim() || !url.trim()) return
+    onAdd(name.trim(), url.trim())
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in-scale" style={{ animationDuration: '0.2s' }} />
+      <div className="relative w-full max-w-md mx-4 animate-fade-in-up" onClick={e => e.stopPropagation()}>
+        <div className="rounded-2xl bg-[#0c1424] border border-white/[0.1] shadow-[0_25px_80px_rgba(0,0,0,0.6),0_0_40px_rgba(48,186,255,0.05)] overflow-hidden">
+          <div className="px-6 pt-6 pb-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-[#30BAFF]/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#30BAFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-display text-sm font-semibold tracking-wider text-white/90">Pin a URL</h3>
+                <p className="font-mono text-[10px] text-gray-600">Add a shortcut to your sidebar</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 pb-2 flex flex-col gap-3">
+            <div>
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-1.5">Name</label>
+              <input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="e.g. Fleet Dashboard"
+                autoFocus
+                className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-tech text-white/80 tracking-wide placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 focus:shadow-[0_0_12px_rgba(48,186,255,0.06)] transition-all"
+              />
+            </div>
+            <div>
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-1.5">URL</label>
+              <input
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                placeholder="https://example.com"
+                onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-mono text-white/60 placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 focus:shadow-[0_0_12px_rgba(48,186,255,0.06)] transition-all"
+              />
+            </div>
+          </div>
+          <div className="px-6 py-5 flex items-center justify-end gap-2">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-white/[0.08] text-xs font-tech text-gray-500 hover:text-gray-400 transition-all press-scale tracking-wider">
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              disabled={!name.trim() || !url.trim()}
+              className="px-5 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] text-xs font-tech font-semibold tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all press-scale disabled:opacity-30 disabled:pointer-events-none"
+            >
+              Pin URL
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Create Section Modal ───────────────────────────────────
+function CreateSectionModal({ pinnedPages, onAssign, onClose }: { pinnedPages: PinnedPage[]; onAssign: (pageIds: string[], sectionName: string) => void; onClose: () => void }) {
+  const [sectionName, setSectionName] = useState('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  const toggleId = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const handleSubmit = () => {
+    if (!sectionName.trim() || selectedIds.length === 0) return
+    onAssign(selectedIds, sectionName.trim())
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in-scale" style={{ animationDuration: '0.2s' }} />
+      <div className="relative w-full max-w-md mx-4 animate-fade-in-up" onClick={e => e.stopPropagation()}>
+        <div className="rounded-2xl bg-[#0c1424] border border-white/[0.1] shadow-[0_25px_80px_rgba(0,0,0,0.6),0_0_40px_rgba(48,186,255,0.05)] overflow-hidden">
+          <div className="px-6 pt-6 pb-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-[#30BAFF]/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#30BAFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-display text-sm font-semibold tracking-wider text-white/90">Group Tabs</h3>
+                <p className="font-mono text-[10px] text-gray-600">Organize tabs into a section</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 pb-2 flex flex-col gap-3">
+            <div>
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-1.5">Section Name</label>
+              <input
+                value={sectionName}
+                onChange={e => setSectionName(e.target.value)}
+                placeholder="e.g. Fleet Tools"
+                autoFocus
+                className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-tech text-white/80 tracking-wide placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 focus:shadow-[0_0_12px_rgba(48,186,255,0.06)] transition-all"
+              />
+            </div>
+            <div>
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-1.5">Select Tabs</label>
+              <div className="max-h-48 overflow-y-auto rounded-lg border border-white/[0.08] bg-white/[0.02]">
+                {pinnedPages.map(page => (
+                  <button
+                    key={page.id}
+                    onClick={() => toggleId(page.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all ${
+                      selectedIds.includes(page.id)
+                        ? 'bg-[#30BAFF]/10 text-[#30BAFF]'
+                        : 'text-gray-400 hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-all ${
+                      selectedIds.includes(page.id)
+                        ? 'border-[#30BAFF] bg-[#30BAFF]/20'
+                        : 'border-gray-600'
+                    }`}>
+                      {selectedIds.includes(page.id) && (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="flex-shrink-0 text-gray-500">{page.icon}</span>
+                    <span className="font-tech text-xs tracking-wide">{page.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-5 flex items-center justify-end gap-2">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-white/[0.08] text-xs font-tech text-gray-500 hover:text-gray-400 transition-all press-scale tracking-wider">
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!sectionName.trim() || selectedIds.length === 0}
+              className="px-5 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] text-xs font-tech font-semibold tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all press-scale disabled:opacity-30 disabled:pointer-events-none"
+            >
+              Create Section
             </button>
           </div>
         </div>
@@ -1977,6 +2233,28 @@ export default function App() {
   const [portals, setPortals] = useState<Portal[]>([])
   const [showPortalModal, setShowPortalModal] = useState(false)
   const [pinnedPages, setPinnedPages] = useState<PinnedPage[]>(defaultPinnedPages)
+  const [showPinUrlModal, setShowPinUrlModal] = useState(false)
+  const [showGroupModal, setShowGroupModal] = useState(false)
+
+  const addPinnedPage = (label: string, url: string) => {
+    const page: PinnedPage = {
+      id: Date.now().toString(),
+      label,
+      url,
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+        </svg>
+      ),
+    }
+    setPinnedPages(prev => [...prev, page])
+    setShowPinUrlModal(false)
+  }
+
+  const assignToSection = (pageIds: string[], sectionName: string) => {
+    setPinnedPages(prev => prev.map(p => pageIds.includes(p.id) ? { ...p, group: sectionName } : p))
+    setShowGroupModal(false)
+  }
 
   const removePinnedPage = (id: string) => {
     setPinnedPages(prev => prev.filter(p => p.id !== id))
@@ -2021,6 +2299,8 @@ export default function App() {
             onNavigate={setActivePage}
             pinnedPages={pinnedPages}
             onRemovePinned={removePinnedPage}
+            onPinUrl={() => setShowPinUrlModal(true)}
+            onGroupTabs={() => setShowGroupModal(true)}
           />
 
           <main className="flex-1 flex flex-col relative min-w-0 z-10">
@@ -2068,6 +2348,16 @@ export default function App() {
       {/* Add Portal Modal */}
       {showPortalModal && (
         <AddPortalModal onAdd={addPortal} onClose={() => setShowPortalModal(false)} portalCount={portals.length} />
+      )}
+
+      {/* Pin URL Modal */}
+      {showPinUrlModal && (
+        <AddPinnedPageModal onAdd={addPinnedPage} onClose={() => setShowPinUrlModal(false)} />
+      )}
+
+      {/* Group Tabs Modal */}
+      {showGroupModal && (
+        <CreateSectionModal pinnedPages={pinnedPages} onAssign={assignToSection} onClose={() => setShowGroupModal(false)} />
       )}
     </div>
   )
