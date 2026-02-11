@@ -91,6 +91,52 @@ See [`docs/architecture/COMPONENT_MAP.md`](docs/architecture/COMPONENT_MAP.md) f
 
 Development session notes are stored in [`docs/sessions/`](docs/sessions/) for AI context continuity across conversations.
 
+## Design System — Figma
+
+The complete design system lives in Figma, including token variables, presentation-quality artboards, and a full screen catalog.
+
+**Figma File:** [ATG Desktop — White Rabbit](https://www.figma.com/design/G9jDet8JJZg9G3JV1wdFTE/ATG-Desktop---White-Rabbit)
+
+### Design Kit 1.0 (White Rabbit Design Library page)
+
+Five presentation artboards branded **VV Nano Design Kit 1.0**:
+
+| Artboard | Contents |
+|----------|----------|
+| 01 — Cover | Logo, title, version badge, accent gradient |
+| 02 — Color Palette | Full color system with hex values and usage labels |
+| 03 — Typography | Orbitron, Rajdhani, JetBrains Mono specimens at all weights/sizes |
+| 04 — Components | Glass panels, buttons, inputs, cards, sidebar, badges |
+| 05 — Effects & Motion | Glow effects, shadows, blur, animation curves, easing |
+
+### Design Tokens (69 variables, 4 collections)
+
+| Collection | Count | Examples |
+|------------|-------|----------|
+| Colors | 30 | Accent, background, surface, text, status colors (Dark + Light modes) |
+| Spacing | 12 | 4px–64px scale |
+| Radius | 7 | sm (4px) through full (9999px) |
+| Effects | 20 | Shadow offsets, blur radii, glow opacities (Dark + Light modes) |
+
+### Screen Catalog (VV Nano 2.0 page)
+
+[View in Figma →](https://www.figma.com/design/G9jDet8JJZg9G3JV1wdFTE/ATG-Desktop---White-Rabbit?node-id=169-3661)
+
+20 artboards covering every screen, modal, and state in the app:
+
+| # | Screen | # | Screen |
+|---|--------|---|--------|
+| 01 | Password Gate | 11 | Account · Usage |
+| 02 | Home · Empty State | 12 | Settings |
+| 03 | Home · Portals | 13 | Pinned Page · Iframe |
+| 04 | Search · Hero | 14 | Welcome Modal · Panel 1 |
+| 05 | Search · Results | 15 | Welcome Modal · Panel 2 |
+| 06 | Notifications | 16 | Welcome Modal · Panel 3 |
+| 07 | Account · Profile | 17 | Add Portal Modal |
+| 08 | Account · Sign-in | 18 | Add Pinned Page Modal |
+| 09 | Account · Two-Factor | 19 | Create Section Modal |
+| 10 | Account · Billing | 20 | Sidebar Collapsed |
+
 ## Design Language
 
 | Token | Value |
@@ -100,6 +146,7 @@ Development session notes are stored in [`docs/sessions/`](docs/sessions/) for A
 | Glass | `rgba(5, 10, 20, 0.4)` + `blur(20px)` |
 | Font Display | `Orbitron` |
 | Font Body | `Rajdhani` |
+| Font Mono | `JetBrains Mono` |
 | Easing | `cubic-bezier(0.16, 1, 0.3, 1)` |
 | Glow | `box-shadow: 0 0 30px rgba(48, 186, 255, 0.15)` |
 
