@@ -1420,6 +1420,284 @@ function AccountView({ onLogout }: { onLogout: () => void }) {
   )
 }
 
+// ─── Settings View ────────────────────────────────────────
+type ThemeMode = 'dark' | 'light' | 'system'
+
+interface Portal {
+  id: string
+  name: string
+  url: string
+  color: string
+}
+
+const defaultPortals: Portal[] = [
+  { id: '1', name: 'Platform Science Demo', url: 'https://demo.platformscience.com', color: '#30BAFF' },
+  { id: '2', name: 'Connected Fleet Central', url: 'https://connectedfleetcentral-staging.connectedfleet.io/#/dashboard', color: '#8B5CF6' },
+  { id: '3', name: 'App Launcher (Staging)', url: 'https://app-launcher-stg-ec29c2dc.appspot.com/welcome', color: '#F59E0B' },
+]
+
+function SettingsView() {
+  const [themeMode, setThemeMode] = useState<ThemeMode>('dark')
+  const [portals, setPortals] = useState<Portal[]>(defaultPortals)
+  const [showAddPortal, setShowAddPortal] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newUrl, setNewUrl] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editUrl, setEditUrl] = useState('')
+
+  const portalColors = ['#30BAFF', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6']
+
+  const addPortal = () => {
+    if (!newName.trim() || !newUrl.trim()) return
+    const color = portalColors[portals.length % portalColors.length]
+    setPortals(prev => [...prev, { id: Date.now().toString(), name: newName.trim(), url: newUrl.trim(), color }])
+    setNewName('')
+    setNewUrl('')
+    setShowAddPortal(false)
+  }
+
+  const removePortal = (id: string) => {
+    setPortals(prev => prev.filter(p => p.id !== id))
+  }
+
+  const startEdit = (p: Portal) => {
+    setEditingId(p.id)
+    setEditName(p.name)
+    setEditUrl(p.url)
+  }
+
+  const saveEdit = () => {
+    if (!editName.trim() || !editUrl.trim() || !editingId) return
+    setPortals(prev => prev.map(p => p.id === editingId ? { ...p, name: editName.trim(), url: editUrl.trim() } : p))
+    setEditingId(null)
+  }
+
+  const themeModes: { id: ThemeMode; label: string; icon: React.ReactNode; desc: string }[] = [
+    { id: 'dark', label: 'Dark', desc: 'Always use dark theme', icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+      </svg>
+    )},
+    { id: 'light', label: 'Light', desc: 'Always use light theme', icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+      </svg>
+    )},
+    { id: 'system', label: 'System', desc: 'Match your OS preference', icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25z" />
+      </svg>
+    )},
+  ]
+
+  return (
+    <div className="flex-1 overflow-auto p-6">
+      <div className="max-w-[680px] mx-auto">
+        <h2 className="font-display text-lg font-semibold tracking-wider text-white/90 mb-1 animate-fade-in-up">Settings</h2>
+        <p className="font-tech text-xs text-gray-600 tracking-wide mb-8 animate-fade-in-up stagger-1">Configure your workspace appearance and connected portals</p>
+
+        {/* ── Appearance ── */}
+        <div className="mb-10 animate-fade-in-up stagger-2">
+          <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-3">Appearance</label>
+          <div className="grid grid-cols-3 gap-3">
+            {themeModes.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setThemeMode(m.id)}
+                className={`relative p-4 rounded-xl border transition-all duration-200 press-scale group ${
+                  themeMode === m.id
+                    ? 'bg-[#30BAFF]/10 border-[#30BAFF]/30 shadow-[0_0_20px_rgba(48,186,255,0.08)]'
+                    : 'bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]'
+                }`}
+              >
+                {/* Preview swatch */}
+                <div className={`w-full h-16 rounded-lg mb-3 overflow-hidden border ${
+                  m.id === 'dark' ? 'bg-[#0a1124] border-white/[0.08]' :
+                  m.id === 'light' ? 'bg-gray-100 border-gray-200' :
+                  'border-white/[0.08] overflow-hidden'
+                }`}>
+                  {m.id === 'dark' && (
+                    <div className="w-full h-full flex gap-1 p-1.5">
+                      <div className="w-4 h-full rounded bg-white/[0.06]" />
+                      <div className="flex-1 flex flex-col gap-1">
+                        <div className="h-2 rounded bg-white/[0.04]" />
+                        <div className="flex-1 rounded bg-white/[0.03]" />
+                      </div>
+                    </div>
+                  )}
+                  {m.id === 'light' && (
+                    <div className="w-full h-full flex gap-1 p-1.5">
+                      <div className="w-4 h-full rounded bg-gray-200" />
+                      <div className="flex-1 flex flex-col gap-1">
+                        <div className="h-2 rounded bg-gray-200" />
+                        <div className="flex-1 rounded bg-gray-100" />
+                      </div>
+                    </div>
+                  )}
+                  {m.id === 'system' && (
+                    <div className="w-full h-full flex">
+                      <div className="w-1/2 bg-[#0a1124] flex gap-0.5 p-1">
+                        <div className="w-2 h-full rounded-sm bg-white/[0.06]" />
+                        <div className="flex-1 rounded-sm bg-white/[0.03]" />
+                      </div>
+                      <div className="w-1/2 bg-gray-100 flex gap-0.5 p-1">
+                        <div className="w-2 h-full rounded-sm bg-gray-200" />
+                        <div className="flex-1 rounded-sm bg-gray-50" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className={`transition-colors ${themeMode === m.id ? 'text-[#30BAFF]' : 'text-gray-500 group-hover:text-gray-400'}`}>{m.icon}</span>
+                  <div className="text-left">
+                    <p className={`font-tech text-sm font-medium tracking-wide transition-colors ${themeMode === m.id ? 'text-[#30BAFF]' : 'text-white/70'}`}>{m.label}</p>
+                    <p className="font-mono text-[9px] text-gray-600">{m.desc}</p>
+                  </div>
+                </div>
+
+                {themeMode === m.id && (
+                  <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)]" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Connected Portals ── */}
+        <div className="animate-fade-in-up stagger-3">
+          <div className="flex items-center justify-between mb-3">
+            <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Connected Portals</label>
+            <span className="font-mono text-[10px] text-gray-700">{portals.length} portal{portals.length !== 1 ? 's' : ''}</span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {portals.map((p, i) => (
+              <div
+                key={p.id}
+                className={`rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-hidden hover-lift animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
+              >
+                {editingId === p.id ? (
+                  /* Edit mode */
+                  <div className="p-4">
+                    <div className="flex flex-col gap-3">
+                      <input
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        placeholder="Portal name"
+                        className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-tech text-white/80 tracking-wide placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 transition-all"
+                      />
+                      <input
+                        value={editUrl}
+                        onChange={e => setEditUrl(e.target.value)}
+                        placeholder="https://..."
+                        className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-mono text-white/60 placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 transition-all"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:text-gray-400 transition-all press-scale tracking-wider">
+                          Cancel
+                        </button>
+                        <button onClick={saveEdit} className="px-3 py-1.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[11px] font-tech text-[#30BAFF] hover:bg-[#30BAFF]/20 transition-all press-scale tracking-wider font-semibold">
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Display mode */
+                  <div className="p-4 flex items-center gap-4">
+                    {/* Color indicator */}
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${p.color}15`, border: `1px solid ${p.color}30` }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" style={{ color: p.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                      </svg>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-tech text-sm text-white/80 font-medium tracking-wide">{p.name}</p>
+                      <p className="font-mono text-[10px] text-gray-600 truncate mt-0.5">{p.url}</p>
+                    </div>
+
+                    {/* Status + actions */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                        <span className="font-mono text-[9px] text-emerald-500 tracking-wider uppercase font-semibold">Ready</span>
+                      </span>
+                      <button
+                        onClick={() => startEdit(p)}
+                        className="p-1.5 rounded-lg text-gray-600 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => removePortal(p.id)}
+                        className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/5 transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Add portal */}
+            {showAddPortal ? (
+              <div className="rounded-xl bg-white/[0.02] border border-[#30BAFF]/15 p-4 animate-fade-in-scale">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)]" />
+                    <span className="font-mono text-[10px] text-[#30BAFF] tracking-wider uppercase">New Portal</span>
+                  </div>
+                  <input
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    placeholder="Portal name (e.g. Fleet Manager)"
+                    autoFocus
+                    className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-tech text-white/80 tracking-wide placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 transition-all"
+                  />
+                  <input
+                    value={newUrl}
+                    onChange={e => setNewUrl(e.target.value)}
+                    placeholder="https://portal-url.com"
+                    onKeyDown={e => e.key === 'Enter' && addPortal()}
+                    className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-mono text-white/60 placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 transition-all"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => { setShowAddPortal(false); setNewName(''); setNewUrl('') }} className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:text-gray-400 transition-all press-scale tracking-wider">
+                      Cancel
+                    </button>
+                    <button onClick={addPortal} className="px-4 py-1.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[11px] font-tech text-[#30BAFF] font-semibold hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 transition-all press-scale tracking-wider">
+                      Add Portal
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddPortal(true)}
+                className="w-full p-4 rounded-xl border border-dashed border-white/[0.08] hover:border-[#30BAFF]/25 text-gray-600 hover:text-[#30BAFF] transition-all duration-200 flex items-center justify-center gap-2 group press-scale"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span className="font-tech text-sm tracking-wide">Add Portal</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Password Gate ─────────────────────────────────────────
 function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState('')
@@ -1509,6 +1787,8 @@ export default function App() {
               <NotificationsView />
             ) : activePage === 'account' ? (
               <AccountView onLogout={() => { sessionStorage.removeItem('vv-auth'); setAuthed(false) }} />
+            ) : activePage === 'settings' ? (
+              <SettingsView />
             ) : (
               <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
                 <BrowserControls />
