@@ -397,8 +397,60 @@ function TrafficLights() {
   )
 }
 
+// ─── Password Gate ─────────────────────────────────────────
+function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(false)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === 'Surf&sn0w') {
+      sessionStorage.setItem('vv-auth', '1')
+      onUnlock()
+    } else {
+      setError(true)
+      setTimeout(() => setError(false), 1500)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-center h-screen w-screen bg-[#1a1a2e]">
+      <Atmosphere />
+      <div className="relative z-10 flex flex-col items-center gap-6">
+        <div className="h-8">
+          <VVLogo />
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            autoFocus
+            className={`w-64 px-4 py-2.5 rounded-lg bg-white/[0.04] border text-sm font-tech text-white/80 tracking-wide placeholder-gray-600 outline-none transition-all duration-300 ${
+              error
+                ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+                : 'border-white/[0.08] focus:border-[#30BAFF]/30 focus:shadow-[0_0_15px_rgba(48,186,255,0.1)]'
+            }`}
+          />
+          <button
+            type="submit"
+            className="px-6 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all duration-300"
+          >
+            Enter
+          </button>
+          {error && (
+            <span className="font-mono text-[11px] text-red-500 animate-pulse">Invalid password</span>
+          )}
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── App ────────────────────────────────────────────────────
 export default function App() {
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem('vv-auth') === '1')
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [activePage, setActivePage] = useState('home')
 
@@ -411,6 +463,8 @@ export default function App() {
     reports: 'Reports',
     settings: 'Settings',
   }
+
+  if (!authed) return <PasswordGate onUnlock={() => setAuthed(true)} />
 
   return (
     <div className="flex items-center justify-center h-screen w-screen bg-[#1a1a2e] p-6">
