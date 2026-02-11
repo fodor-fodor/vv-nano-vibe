@@ -228,3 +228,17 @@ body {
 .font-tech {
   font-family: 'Rajdhani', sans-serif;
 }
+
+/* ─── Onboarding animations ──────────────────────────────── */
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-left {
+  animation: slide-in-left 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes spotlight-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(48,186,255,0.2), 0 0 20px rgba(48,186,255,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(48,186,255,0), 0 0 30px rgba(48,186,255,0.5); }
+}

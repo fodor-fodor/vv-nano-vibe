@@ -199,7 +199,7 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, o
   }))
 
   return (
-    <aside className={`sidebar-transition ${isCollapsed ? 'w-[72px]' : 'w-[200px]'} glass-subtle flex flex-col justify-between relative z-20 flex-shrink-0`}>
+    <aside data-tour-id="sidebar" className={`sidebar-transition ${isCollapsed ? 'w-[72px]' : 'w-[200px]'} glass-subtle flex flex-col justify-between relative z-20 flex-shrink-0`}>
       <div>
         {/* Logo */}
         <div className="h-16 flex items-center px-5 mb-1">
@@ -245,6 +245,7 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, o
           {pinnedPages.length > 0 && <div className="h-px w-full bg-[#30BAFF]/5 my-2" />}
 
           {/* Ungrouped pinned pages */}
+          <div data-tour-id="pinned-section">
           {ungroupedPages.map((item) => (
             <PinnedNavItem
               key={item.id}
@@ -289,10 +290,11 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, o
               ))}
             </div>
           ))}
+          </div>
 
           <div className="h-px w-full bg-[#30BAFF]/5 my-3" />
 
-          <div className="relative" ref={moreMenuRef}>
+          <div data-tour-id="more-menu" className="relative" ref={moreMenuRef}>
             <button
               onClick={() => setMoreMenuOpen(!moreMenuOpen)}
               className="w-full group flex items-center px-3 py-2.5 rounded-lg text-gray-600 hover:bg-[#30BAFF]/5 hover:text-[#30BAFF] transition-all"
@@ -385,7 +387,7 @@ function Header({ activePage, onNavigate, pinnedPages }: { activePage: string; o
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2">
+      <div data-tour-id="header-actions" className="flex items-center gap-2">
         {/* Search */}
         <button onClick={() => onNavigate('search')} className="p-2 text-gray-500 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 rounded-lg transition-all group press-scale">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -2225,6 +2227,233 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   )
 }
 
+// ─── Welcome Modal ──────────────────────────────────────────
+const welcomePanels = [
+  {
+    headline: 'Your Fleet Command Center',
+    description: 'Connect all telematics platforms in one workspace. Monitor, manage, and control your entire fleet from a single pane of glass.',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+      </svg>
+    ),
+  },
+  {
+    headline: 'Pin What Matters',
+    description: 'Add frequently-used pages to your sidebar for instant access. Organize them into groups to keep your workspace tidy.',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+      </svg>
+    ),
+  },
+  {
+    headline: 'Stay in Control',
+    description: 'Search across all portals, get real-time notifications, and customize your workspace to fit your workflow.',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.581-.495.644-.869l.214-1.281z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+  },
+]
+
+function WelcomeModal({ onStartTour, onSkip }: { onStartTour: () => void; onSkip: () => void }) {
+  const [currentPanel, setCurrentPanel] = useState(0)
+  const panel = welcomePanels[currentPanel]
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg mx-4 rounded-2xl bg-[#0c1424] border border-[#30BAFF]/15 shadow-[0_25px_80px_rgba(0,0,0,0.6)] overflow-hidden animate-fade-in-scale">
+        {/* Subtle top glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-px bg-gradient-to-r from-transparent via-[#30BAFF]/40 to-transparent" />
+
+        <div className="px-8 pt-10 pb-8 flex flex-col items-center text-center">
+          {/* Animated icon */}
+          <div key={currentPanel} className="text-[#30BAFF] animate-float mb-6 animate-fade-in-up">
+            {panel.icon}
+          </div>
+
+          {/* Content */}
+          <div key={`text-${currentPanel}`} className="animate-fade-in-up stagger-1">
+            <h2 className="font-display text-xl font-bold text-white tracking-wide mb-3">
+              {panel.headline}
+            </h2>
+            <p className="font-tech text-gray-400 text-base leading-relaxed max-w-sm">
+              {panel.description}
+            </p>
+          </div>
+
+          {/* Dot indicators */}
+          <div className="flex items-center gap-2 mt-8 mb-6">
+            {welcomePanels.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPanel(i)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  i === currentPanel ? 'bg-[#30BAFF] w-6' : 'bg-gray-700 hover:bg-gray-600'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center gap-3 w-full max-w-xs">
+            {currentPanel > 0 && (
+              <button
+                onClick={() => setCurrentPanel(currentPanel - 1)}
+                className="p-2 text-gray-500 hover:text-[#30BAFF] transition-colors press-scale"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
+            <div className="flex-1" />
+            {currentPanel < 2 ? (
+              <button
+                onClick={() => setCurrentPanel(currentPanel + 1)}
+                className="px-6 py-2 rounded-lg bg-[#30BAFF]/10 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider border border-[#30BAFF]/20 hover:bg-[#30BAFF]/20 transition-all press-scale"
+              >
+                Next
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={onSkip}
+                  className="px-4 py-2 text-gray-500 font-tech text-sm tracking-wider hover:text-gray-300 transition-colors"
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={onStartTour}
+                  className="px-6 py-2 rounded-lg bg-[#30BAFF]/10 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider border border-[#30BAFF]/20 hover:bg-[#30BAFF]/20 transition-all press-scale"
+                >
+                  Take a Tour
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Guided Tour ────────────────────────────────────────────
+const tourSteps = [
+  { tourId: 'sidebar', title: 'Your Navigation Hub', description: 'Access all your pages, portals, and settings from the sidebar. Collapse it for more workspace.', position: 'right' as const },
+  { tourId: 'pinned-section', title: 'Pinned Pages', description: 'Your most-used pages live here for one-click access. Pin any URL to keep it handy.', position: 'right' as const },
+  { tourId: 'more-menu', title: 'More Actions', description: 'Pin new URLs and organize pages into groups from this menu.', position: 'right' as const },
+  { tourId: 'header-actions', title: 'Quick Actions', description: 'Search across portals, check notifications, and access your account settings.', position: 'bottom' as const },
+  { tourId: 'content-frame', title: 'Your Workspace', description: 'This is where your portals and pages appear. Add portals to start building your command center.', position: 'top' as const },
+]
+
+function GuidedTour({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
+  const [step, setStep] = useState(0)
+  const [rect, setRect] = useState<DOMRect | null>(null)
+  const current = tourSteps[step]
+
+  useEffect(() => {
+    const el = document.querySelector(`[data-tour-id="${current.tourId}"]`)
+    if (el) setRect(el.getBoundingClientRect())
+  }, [step, current.tourId])
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onSkip()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onSkip])
+
+  const advance = () => {
+    if (step < tourSteps.length - 1) setStep(step + 1)
+    else onComplete()
+  }
+
+  if (!rect) return null
+
+  const pad = 8
+  const cutout = {
+    top: rect.top - pad,
+    left: rect.left - pad,
+    width: rect.width + pad * 2,
+    height: rect.height + pad * 2,
+  }
+
+  // Tooltip positioning
+  let tooltipStyle: React.CSSProperties = {}
+  if (current.position === 'right') {
+    tooltipStyle = { top: cutout.top, left: cutout.left + cutout.width + 16 }
+  } else if (current.position === 'bottom') {
+    tooltipStyle = { top: cutout.top + cutout.height + 16, left: cutout.left }
+  } else if (current.position === 'top') {
+    tooltipStyle = { top: cutout.top - 16, left: cutout.left + 40, transform: 'translateY(-100%)' }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100]">
+      {/* Overlay segments creating cutout */}
+      {/* Top */}
+      <div className="absolute bg-black/70" style={{ top: 0, left: 0, right: 0, height: cutout.top }} />
+      {/* Bottom */}
+      <div className="absolute bg-black/70" style={{ top: cutout.top + cutout.height, left: 0, right: 0, bottom: 0 }} />
+      {/* Left */}
+      <div className="absolute bg-black/70" style={{ top: cutout.top, left: 0, width: cutout.left, height: cutout.height }} />
+      {/* Right */}
+      <div className="absolute bg-black/70" style={{ top: cutout.top, left: cutout.left + cutout.width, right: 0, height: cutout.height }} />
+
+      {/* Spotlight border */}
+      <div
+        className="absolute rounded-lg pointer-events-none"
+        style={{
+          top: cutout.top,
+          left: cutout.left,
+          width: cutout.width,
+          height: cutout.height,
+          boxShadow: '0 0 0 2px rgba(48,186,255,0.3), 0 0 20px rgba(48,186,255,0.2)',
+          animation: 'spotlight-pulse 2s ease-in-out infinite',
+        }}
+      />
+
+      {/* Tooltip */}
+      <div
+        key={step}
+        className="absolute max-w-xs rounded-xl bg-[#0c1424]/95 border border-[#30BAFF]/15 shadow-[0_15px_50px_rgba(0,0,0,0.5)] p-5 animate-fade-in-up"
+        style={tooltipStyle}
+      >
+        <h3 className="font-display text-sm font-bold text-white tracking-wider mb-2">
+          {current.title}
+        </h3>
+        <p className="font-tech text-gray-400 text-sm leading-relaxed mb-4">
+          {current.description}
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] text-gray-600 tracking-wider">
+            {step + 1} of {tourSteps.length}
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onSkip}
+              className="text-gray-500 font-tech text-xs tracking-wider hover:text-gray-300 transition-colors"
+            >
+              Skip tour
+            </button>
+            <button
+              onClick={advance}
+              className="px-4 py-1.5 rounded-lg bg-[#30BAFF]/10 text-[#30BAFF] font-tech font-semibold text-xs tracking-wider border border-[#30BAFF]/20 hover:bg-[#30BAFF]/20 transition-all press-scale"
+            >
+              {step < tourSteps.length - 1 ? 'Got it' : 'Finish'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── App ────────────────────────────────────────────────────
 export default function App() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('vv-auth') === '1')
@@ -2235,6 +2464,23 @@ export default function App() {
   const [pinnedPages, setPinnedPages] = useState<PinnedPage[]>(defaultPinnedPages)
   const [showPinUrlModal, setShowPinUrlModal] = useState(false)
   const [showGroupModal, setShowGroupModal] = useState(false)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(() =>
+    !localStorage.getItem('vv-onboarding-completed')
+  )
+  const [showTour, setShowTour] = useState(false)
+
+  const handleSkipOnboarding = () => {
+    setShowWelcomeModal(false)
+    localStorage.setItem('vv-onboarding-completed', '1')
+  }
+  const handleStartTour = () => {
+    setShowWelcomeModal(false)
+    setShowTour(true)
+  }
+  const handleCompleteTour = () => {
+    setShowTour(false)
+    localStorage.setItem('vv-onboarding-completed', '1')
+  }
 
   const addPinnedPage = (label: string, url: string) => {
     const page: PinnedPage = {
@@ -2303,7 +2549,7 @@ export default function App() {
             onGroupTabs={() => setShowGroupModal(true)}
           />
 
-          <main className="flex-1 flex flex-col relative min-w-0 z-10">
+          <main data-tour-id="content-frame" className="flex-1 flex flex-col relative min-w-0 z-10">
             <Header activePage={activePage} onNavigate={setActivePage} pinnedPages={pinnedPages} />
 
             {activePage === 'search' ? (
@@ -2359,6 +2605,10 @@ export default function App() {
       {showGroupModal && (
         <CreateSectionModal pinnedPages={pinnedPages} onAssign={assignToSection} onClose={() => setShowGroupModal(false)} />
       )}
+
+      {/* Onboarding */}
+      {showWelcomeModal && authed && <WelcomeModal onStartTour={handleStartTour} onSkip={handleSkipOnboarding} />}
+      {showTour && <GuidedTour onComplete={handleCompleteTour} onSkip={handleCompleteTour} />}
     </div>
   )
 }
