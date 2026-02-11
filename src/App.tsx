@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 
 // ─── Theme ────────────────────────────────────────────────
 type ThemeMode = 'dark' | 'light' | 'system'
@@ -2806,6 +2807,9 @@ export default function App() {
       {/* Onboarding */}
       {showWelcomeModal && authed && <WelcomeModal onStartTour={handleStartTour} onSkip={handleSkipOnboarding} />}
       {showTour && <GuidedTour onComplete={handleCompleteTour} onSkip={handleCompleteTour} />}
+      
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   )
 }
