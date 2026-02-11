@@ -930,17 +930,6 @@ export default function App() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [activePage, setActivePage] = useState('home')
 
-  const pageLabels: Record<string, string> = {
-    search: 'Search',
-    notifications: 'Notifications',
-    home: 'Home Dashboard',
-    vehicles: 'Vehicle Management',
-    messages: 'Messages',
-    compliance: 'Compliance',
-    drivewyze: 'Drivewyze',
-    reports: 'Reports',
-    settings: 'Settings',
-  }
 
   if (!authed) return <PasswordGate onUnlock={() => setAuthed(true)} />
 
