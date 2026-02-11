@@ -27,51 +27,143 @@ function Atmosphere() {
   )
 }
 
-// ─── Nav Items ──────────────────────────────────────────────
-const navItems = [
+// ─── System Nav Items (non-removable) ───────────────────────
+const systemNavItems = [
   { id: 'search', label: 'Search', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
     </svg>
   )},
-  { id: 'home', label: 'Home', divider: true, icon: (
+  { id: 'home', label: 'Home', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
     </svg>
   )},
-  { id: 'vehicles', label: 'Vehicles', divider: true, icon: (
+]
+
+// ─── Pinned Page Type ───────────────────────────────────────
+interface PinnedPage {
+  id: string
+  label: string
+  url: string
+  icon: React.ReactNode
+}
+
+const defaultPinnedPages: PinnedPage[] = [
+  { id: 'vehicles', label: 'Vehicles', url: 'https://connectedfleetcentral-staging.connectedfleet.io/#/vehicles', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.126-.504 1.126-1.125V14.25" />
     </svg>
   )},
-  { id: 'messages', label: 'Messages', icon: (
+  { id: 'messages', label: 'Messages', url: 'https://demo.platformscience.com', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
     </svg>
   )},
-  { id: 'compliance', label: 'Compliance', icon: (
+  { id: 'compliance', label: 'Compliance', url: 'https://connectedfleetcentral-staging.connectedfleet.io/#/dashboard', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
     </svg>
   )},
-  { id: 'drivewyze', label: 'Drivewyze', icon: (
+  { id: 'drivewyze', label: 'Drivewyze', url: 'https://app-launcher-stg-ec29c2dc.appspot.com/welcome', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
     </svg>
   )},
-  { id: 'reports', label: 'Reports', icon: (
+  { id: 'reports', label: 'Reports', url: 'https://demo.platformscience.com', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
     </svg>
   )},
 ]
 
+// ─── Pinned Nav Item (with overflow menu) ──────────────────
+function PinnedNavItem({ item, isActive, isCollapsed, onNavigate, onRemove }: {
+  item: PinnedPage
+  isActive: boolean
+  isCollapsed: boolean
+  onNavigate: (id: string) => void
+  onRemove: (id: string) => void
+}) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  return (
+    <div className="relative group">
+      <button
+        onClick={() => onNavigate(item.id)}
+        className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${
+          isActive
+            ? 'bg-[#30BAFF]/10 text-[#30BAFF] text-glow-sm'
+            : 'text-gray-500 hover:bg-[#30BAFF]/5 hover:text-[#30BAFF]'
+        }`}
+      >
+        <span className="flex-shrink-0">{item.icon}</span>
+        {!isCollapsed && (
+          <span className="ml-3 font-tech font-medium text-[15px] fade-text tracking-wide flex-1 text-left">{item.label}</span>
+        )}
+        {isActive && (
+          <div className="absolute left-0 w-[2px] h-5 bg-[#30BAFF] rounded-r-full cyan-glow" />
+        )}
+      </button>
+
+      {/* Overflow dots — visible on hover */}
+      {!isCollapsed && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
+          className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-gray-700 hover:text-[#30BAFF] hover:bg-[#30BAFF]/10 opacity-0 group-hover:opacity-100 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+          </svg>
+        </button>
+      )}
+
+      {/* Tooltip menu */}
+      {menuOpen && (
+        <div ref={menuRef} className="absolute right-0 top-full mt-1 w-48 rounded-lg bg-[#0c1424] border border-white/[0.1] shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-dropdown-in">
+          <button
+            onClick={(e) => { e.stopPropagation(); window.open(item.url, '_blank'); setMenuOpen(false) }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-gray-400 hover:text-white hover:bg-[#30BAFF]/5 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            <span className="font-tech text-xs tracking-wide">Open in new tab</span>
+          </button>
+          <div className="h-px bg-white/[0.06]" />
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(item.id); setMenuOpen(false) }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-gray-400 hover:text-red-400 hover:bg-red-500/5 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l1.664 1.664M21 21l-1.5-1.5m-5.533-1.8a3.75 3.75 0 00-5.98-4.243m12.714 3.658A9.956 9.956 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.956 9.956 0 004.315 8.22" />
+            </svg>
+            <span className="font-tech text-xs tracking-wide">Remove from sidebar</span>
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Sidebar ────────────────────────────────────────────────
-function Sidebar({ isCollapsed, activePage, onToggle, onNavigate }: {
+function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, onRemovePinned }: {
   isCollapsed: boolean
   activePage: string
   onToggle: () => void
   onNavigate: (id: string) => void
+  pinnedPages: PinnedPage[]
+  onRemovePinned: (id: string) => void
 }) {
   return (
     <aside className={`sidebar-transition ${isCollapsed ? 'w-[72px]' : 'w-[200px]'} glass-subtle flex flex-col justify-between relative z-20 flex-shrink-0`}>
@@ -95,13 +187,12 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate }: {
 
         {/* Nav items */}
         <nav className="flex flex-col px-3 gap-0.5">
-          {navItems.map((item) => (
-            <div key={item.id}>
-            {item.divider && <div className="h-px w-full bg-[#30BAFF]/5 my-2" />}
+          {/* System items: Search, Home */}
+          {systemNavItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`group flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${
+              className={`group flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative ${
                 activePage === item.id
                   ? 'bg-[#30BAFF]/10 text-[#30BAFF] text-glow-sm'
                   : 'text-gray-500 hover:bg-[#30BAFF]/5 hover:text-[#30BAFF]'
@@ -115,7 +206,21 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate }: {
                 <div className="absolute left-0 w-[2px] h-5 bg-[#30BAFF] rounded-r-full cyan-glow" />
               )}
             </button>
-            </div>
+          ))}
+
+          {/* Divider before pinned pages */}
+          {pinnedPages.length > 0 && <div className="h-px w-full bg-[#30BAFF]/5 my-2" />}
+
+          {/* Pinned pages */}
+          {pinnedPages.map((item) => (
+            <PinnedNavItem
+              key={item.id}
+              item={item}
+              isActive={activePage === item.id}
+              isCollapsed={isCollapsed}
+              onNavigate={onNavigate}
+              onRemove={onRemovePinned}
+            />
           ))}
 
           <div className="h-px w-full bg-[#30BAFF]/5 my-3" />
@@ -161,19 +266,16 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate }: {
 }
 
 // ─── Header ─────────────────────────────────────────────────
-function Header({ activePage, onNavigate }: { activePage: string; onNavigate: (id: string) => void }) {
-  const pageLabels: Record<string, string> = {
+function Header({ activePage, onNavigate, pinnedPages }: { activePage: string; onNavigate: (id: string) => void; pinnedPages: PinnedPage[] }) {
+  const systemLabels: Record<string, string> = {
     search: 'SEARCH',
     notifications: 'NOTIFICATIONS',
     account: 'ACCOUNT',
     home: 'HOME',
-    vehicles: 'VEHICLES',
-    messages: 'MESSAGES',
-    compliance: 'COMPLIANCE',
-    drivewyze: 'DRIVEWYZE',
-    reports: 'REPORTS',
     settings: 'SETTINGS',
   }
+  const pinnedLabel = pinnedPages.find(p => p.id === activePage)?.label.toUpperCase()
+  const pageLabels = { ...systemLabels, ...(pinnedLabel ? { [activePage]: pinnedLabel } : {}) }
 
   return (
     <header className="h-14 flex items-center justify-between px-6 flex-shrink-0 border-b border-[#30BAFF]/5">
@@ -1874,6 +1976,15 @@ export default function App() {
   const [activePage, setActivePage] = useState('home')
   const [portals, setPortals] = useState<Portal[]>([])
   const [showPortalModal, setShowPortalModal] = useState(false)
+  const [pinnedPages, setPinnedPages] = useState<PinnedPage[]>(defaultPinnedPages)
+
+  const removePinnedPage = (id: string) => {
+    setPinnedPages(prev => prev.filter(p => p.id !== id))
+    if (activePage === id) setActivePage('home')
+  }
+
+  // Find the URL for the active pinned page (if any)
+  const activePinnedPage = pinnedPages.find(p => p.id === activePage)
 
   const addPortal = (p: Portal) => {
     setPortals(prev => [...prev, p])
@@ -1908,10 +2019,12 @@ export default function App() {
             activePage={activePage}
             onToggle={() => setIsCollapsed(!isCollapsed)}
             onNavigate={setActivePage}
+            pinnedPages={pinnedPages}
+            onRemovePinned={removePinnedPage}
           />
 
           <main className="flex-1 flex flex-col relative min-w-0 z-10">
-            <Header activePage={activePage} onNavigate={setActivePage} />
+            <Header activePage={activePage} onNavigate={setActivePage} pinnedPages={pinnedPages} />
 
             {activePage === 'search' ? (
               <SearchView />
@@ -1921,6 +2034,27 @@ export default function App() {
               <AccountView onLogout={() => { sessionStorage.removeItem('vv-auth'); setAuthed(false) }} />
             ) : activePage === 'settings' ? (
               <SettingsView portals={portals} onAddPortal={() => setShowPortalModal(true)} onRemovePortal={removePortal} onEditPortal={editPortal} />
+            ) : activePinnedPage ? (
+              <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
+                <BrowserControls />
+                <div className="flex-1 w-full rounded-xl border border-[#30BAFF]/15 animate-glow-in iframe-container relative overflow-hidden">
+                  {/* Corner accents */}
+                  <div className="absolute top-0 left-0 w-8 h-px bg-gradient-to-r from-[#30BAFF]/40 to-transparent" />
+                  <div className="absolute top-0 left-0 w-px h-8 bg-gradient-to-b from-[#30BAFF]/40 to-transparent" />
+                  <div className="absolute top-0 right-0 w-8 h-px bg-gradient-to-l from-[#30BAFF]/40 to-transparent" />
+                  <div className="absolute top-0 right-0 w-px h-8 bg-gradient-to-b from-[#30BAFF]/40 to-transparent" />
+                  <div className="absolute bottom-0 left-0 w-8 h-px bg-gradient-to-r from-[#30BAFF]/40 to-transparent" />
+                  <div className="absolute bottom-0 left-0 w-px h-8 bg-gradient-to-t from-[#30BAFF]/40 to-transparent" />
+                  <div className="absolute bottom-0 right-0 w-8 h-px bg-gradient-to-l from-[#30BAFF]/40 to-transparent" />
+                  <div className="absolute bottom-0 right-0 w-px h-8 bg-gradient-to-t from-[#30BAFF]/40 to-transparent" />
+                  <iframe
+                    src={activePinnedPage.url}
+                    className="w-full h-full border-0 rounded-xl"
+                    title={activePinnedPage.label}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  />
+                </div>
+              </div>
             ) : (
               <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
                 <BrowserControls />
