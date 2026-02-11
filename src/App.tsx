@@ -74,7 +74,7 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate }: {
   onNavigate: (id: string) => void
 }) {
   return (
-    <aside className={`sidebar-transition ${isCollapsed ? 'w-[72px]' : 'w-[260px]'} glass-subtle flex flex-col justify-between relative z-20 flex-shrink-0`}>
+    <aside className={`sidebar-transition ${isCollapsed ? 'w-[72px]' : 'w-[200px]'} glass-subtle flex flex-col justify-between relative z-20 flex-shrink-0`}>
       <div>
         {/* Logo */}
         <div className="h-16 flex items-center px-5 mb-1">
@@ -161,9 +161,10 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate }: {
 }
 
 // ─── Header ─────────────────────────────────────────────────
-function Header({ activePage }: { activePage: string }) {
+function Header({ activePage, onNavigate }: { activePage: string; onNavigate: (id: string) => void }) {
   const pageLabels: Record<string, string> = {
     search: 'SEARCH',
+    notifications: 'NOTIFICATIONS',
     home: 'HOME',
     vehicles: 'VEHICLES',
     messages: 'MESSAGES',
@@ -187,18 +188,18 @@ function Header({ activePage }: { activePage: string }) {
       {/* Actions */}
       <div className="flex items-center gap-2">
         {/* Search */}
-        <button className="p-2 text-gray-500 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 rounded-lg transition-all group">
+        <button onClick={() => onNavigate('search')} className="p-2 text-gray-500 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 rounded-lg transition-all group press-scale">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
           </svg>
         </button>
 
         {/* Notifications */}
-        <button className="p-2 text-gray-500 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 rounded-lg transition-all relative">
+        <button onClick={() => onNavigate('notifications')} className="p-2 text-gray-500 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 rounded-lg transition-all relative press-scale">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
           </svg>
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#30BAFF] rounded-full shadow-[0_0_6px_rgba(0,240,255,0.6)]" />
+          {activePage !== 'notifications' && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#30BAFF] rounded-full shadow-[0_0_6px_rgba(48,186,255,0.6)]" />}
         </button>
 
         <div className="h-6 w-px bg-gray-800 mx-1" />
@@ -251,7 +252,7 @@ function BrowserControls() {
 // ─── Content Frame ──────────────────────────────────────────
 function ContentFrame({ label }: { label: string }) {
   return (
-    <div className="flex-1 w-full rounded-xl border border-[#30BAFF]/15 animate-pulse-glow iframe-container relative overflow-hidden">
+    <div className="flex-1 w-full rounded-xl border border-[#30BAFF]/15 animate-pulse-glow animate-glow-in iframe-container relative overflow-hidden">
       {/* Corner accents */}
       <div className="absolute top-0 left-0 w-8 h-px bg-gradient-to-r from-[#30BAFF]/40 to-transparent" />
       <div className="absolute top-0 left-0 w-px h-8 bg-gradient-to-b from-[#30BAFF]/40 to-transparent" />
@@ -268,7 +269,7 @@ function ContentFrame({ label }: { label: string }) {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#30BAFF] opacity-[0.02] rounded-full blur-[100px]" />
         </div>
 
-        <div className="z-10 flex flex-col items-center gap-6">
+        <div className="z-10 flex flex-col items-center gap-6 animate-fade-in-scale">
           {/* Energy orb */}
           <div className="w-20 h-20 flex items-center justify-center relative">
             <svg viewBox="0 0 80 80" className="w-20 h-20 absolute" xmlns="http://www.w3.org/2000/svg">
@@ -359,7 +360,7 @@ function ContentFrame({ label }: { label: string }) {
           </div>
 
           {/* Start Setup button */}
-          <button className="mt-2 px-6 py-2.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(0,240,255,0.15)] transition-all duration-300">
+          <button className="mt-2 px-6 py-2.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all duration-300 press-scale">
             Start Setup
           </button>
 
@@ -478,13 +479,13 @@ function SearchView() {
         </div>
 
         <div className="z-10 flex flex-col items-center w-full max-w-[680px] px-4">
-          <h2 className="font-display text-2xl font-semibold tracking-wider text-white/90 text-glow-sm mb-8">
+          <h2 className="font-display text-2xl font-semibold tracking-wider text-white/90 text-glow-sm mb-8 animate-fade-in-up">
             Search across all portals
           </h2>
 
           {/* Search bar */}
-          <div className="relative w-full mb-5">
-            <div className="flex items-center w-full rounded-2xl bg-black/30 border-2 border-[#30BAFF]/20 focus-within:border-[#30BAFF]/40 transition-all duration-300 overflow-hidden">
+          <div className="relative w-full mb-5 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center w-full rounded-2xl bg-black/30 border-2 border-[#30BAFF]/20 focus-within:border-[#30BAFF]/40 focus-within:shadow-[0_0_30px_rgba(48,186,255,0.08)] transition-all duration-300 overflow-hidden">
               <input
                 ref={inputRef}
                 type="text"
@@ -497,7 +498,7 @@ function SearchView() {
               />
               <button
                 onClick={handleSearch}
-                className="m-2 w-12 h-12 rounded-xl bg-gradient-to-b from-[#1e6298] to-[#244151] flex items-center justify-center hover:from-[#2878b5] hover:to-[#2d5470] transition-all flex-shrink-0"
+                className="m-2 w-12 h-12 rounded-xl bg-gradient-to-b from-[#1e6298] to-[#244151] flex items-center justify-center hover:from-[#2878b5] hover:to-[#2d5470] transition-all flex-shrink-0 press-scale hover:shadow-[0_0_15px_rgba(48,186,255,0.2)]"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
@@ -507,12 +508,12 @@ function SearchView() {
 
             {/* Dropdown suggestions */}
             {showDropdown && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-[#0c1424] border border-white/[0.08] shadow-[0_15px_50px_rgba(0,0,0,0.5)] overflow-hidden z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-[#0c1424] border border-white/[0.08] shadow-[0_15px_50px_rgba(0,0,0,0.5)] overflow-hidden z-50 animate-dropdown-in">
                 {suggestions.map((s, i) => (
                   <button
                     key={i}
                     onClick={() => handleSelect(s)}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-[#30BAFF]/5 transition-colors group"
+                    className={`w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-[#30BAFF]/5 transition-all duration-150 group animate-fade-in-up stagger-${i + 1}`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600 group-hover:text-[#30BAFF] transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -526,15 +527,15 @@ function SearchView() {
 
           {/* Filter pills */}
           <div className="flex flex-wrap gap-2 justify-center">
-            {searchFilters.map((f) => (
+            {searchFilters.map((f, i) => (
               <button
                 key={f}
                 onClick={() => toggleFilter(f)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-semibold font-tech tracking-wider uppercase transition-all duration-200 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-semibold font-tech tracking-wider uppercase press-scale animate-fade-in-up stagger-${i + 1} ${
                   activeFilters.includes(f)
-                    ? 'bg-[#30BAFF]/15 border-[#30BAFF]/40 text-[#30BAFF]'
+                    ? 'bg-[#30BAFF]/15 border-[#30BAFF]/40 text-[#30BAFF] shadow-[0_0_12px_rgba(48,186,255,0.1)]'
                     : 'bg-[#323232]/40 border-[#30BAFF]/15 text-gray-500 hover:border-[#30BAFF]/30 hover:text-gray-400'
-                }`}
+                } transition-all duration-200`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -569,7 +570,7 @@ function SearchView() {
             />
             <button
               onClick={() => { setHasSearched(false); setQuery('') }}
-              className="px-3 py-1 mr-2 text-xs font-tech text-gray-500 hover:text-[#30BAFF] transition-colors tracking-wider"
+              className="px-3 py-1 mr-2 text-xs font-tech text-gray-500 hover:text-[#30BAFF] transition-all tracking-wider press-scale"
             >
               Clear
             </button>
@@ -594,12 +595,12 @@ function SearchView() {
 
           {/* Dropdown */}
           {showDropdown && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 rounded-xl bg-[#0c1424] border border-white/[0.08] shadow-[0_15px_50px_rgba(0,0,0,0.5)] overflow-hidden z-50">
+            <div className="absolute top-full left-0 right-0 mt-1 rounded-xl bg-[#0c1424] border border-white/[0.08] shadow-[0_15px_50px_rgba(0,0,0,0.5)] overflow-hidden z-50 animate-dropdown-in">
               {suggestions.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => handleSelect(s)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#30BAFF]/5 transition-colors group"
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#30BAFF]/5 transition-all duration-150 group animate-fade-in-up stagger-${i + 1}`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-600 group-hover:text-[#30BAFF] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -617,11 +618,11 @@ function SearchView() {
         <div className="flex gap-4 h-full">
           {/* Left column — results cards */}
           <div className="flex-1 flex flex-col gap-3 min-w-0">
-            <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase mb-1">{mockResults.length} results for "{query}"</span>
+            <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase mb-1 animate-fade-in-up">{mockResults.length} results for "{query}"</span>
             {mockResults.map((r, i) => (
               <button
                 key={i}
-                className="w-full text-left p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#30BAFF]/20 hover:bg-[#30BAFF]/[0.03] transition-all duration-200 group"
+                className={`w-full text-left p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#30BAFF]/20 hover:bg-[#30BAFF]/[0.03] group hover-lift animate-fade-in-up stagger-${i + 1}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -638,23 +639,23 @@ function SearchView() {
           </div>
 
           {/* Right column — detail / AI panel */}
-          <div className="w-[320px] flex-shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.01] p-5 flex flex-col">
+          <div className="w-[320px] flex-shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.01] p-5 flex flex-col animate-slide-in-right">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)] animate-pulse" />
               <span className="font-mono text-[10px] text-[#30BAFF] tracking-wider uppercase">AI Assistant</span>
             </div>
             <div className="flex-1 flex flex-col gap-3 overflow-auto">
-              <div className="p-3 rounded-lg bg-[#30BAFF]/[0.04] border border-[#30BAFF]/10">
+              <div className="p-3 rounded-lg bg-[#30BAFF]/[0.04] border border-[#30BAFF]/10 animate-fade-in-up stagger-2">
                 <p className="font-tech text-xs text-gray-400 leading-relaxed tracking-wide">
                   Found <span className="text-[#30BAFF]">6 results</span> across your portals. Unit #4821 has an active fault code that may need attention — <span className="text-red-400">P0401 EGR Flow Insufficient</span> was detected 23 minutes ago.
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] animate-fade-in-up stagger-4">
                 <p className="font-tech text-xs text-gray-500 leading-relaxed tracking-wide">
                   Driver Marcus Chen is currently on duty with 6h 14m HOS remaining. The unit is en route Dallas → Phoenix with an ETA of 9h 22m.
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] animate-fade-in-up stagger-6">
                 <p className="font-tech text-xs text-gray-500 leading-relaxed tracking-wide">
                   Tip: Click any result card to view full details in the portal viewer.
                 </p>
@@ -668,6 +669,203 @@ function SearchView() {
                 </svg>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Notifications Data ────────────────────────────────────
+const initialNotifications = [
+  { id: 1, type: 'critical' as const, read: false, title: 'Critical Fault: P0401 — EGR Flow Insufficient', body: 'Detected on Unit #4821 (Freightliner Cascadia). SPN 27 / FMI 4. Immediate inspection recommended.', time: '23 min ago', source: 'Platform Science' },
+  { id: 2, type: 'alert' as const, read: false, title: 'Geofence Exit — Distribution Center Alpha', body: 'Unit #4821 exited zone at 14:32 CST. Driver: Marcus Chen. No scheduled departure found.', time: '48 min ago', source: 'Geofence Monitor' },
+  { id: 3, type: 'warning' as const, read: false, title: 'HOS Warning: 2h remaining', body: 'Driver Marcus Chen approaching daily driving limit. 6h 14m of 8h used. Break required before 20:46 CST.', time: '1h ago', source: 'ELD Compliance' },
+  { id: 4, type: 'info' as const, read: true, title: 'DVIR Submitted — Unit #4821', body: 'Pre-trip inspection completed by Marcus Chen. All items passed. No defects reported.', time: '3h ago', source: 'DVIR System' },
+  { id: 5, type: 'alert' as const, read: true, title: 'Tire Pressure Low — Position 3L', body: 'Unit #4821 left rear outer tire at 92 PSI (threshold: 95 PSI). Monitor recommended.', time: '4h ago', source: 'TPMS' },
+  { id: 6, type: 'info' as const, read: true, title: 'Firmware Update Available — ELD #PS-90042', body: 'Version 3.8.2 available. Includes stability improvements and FMCSA regulation updates.', time: '6h ago', source: 'Device Manager' },
+  { id: 7, type: 'warning' as const, read: true, title: 'Hard Braking Event Detected', body: 'Unit #4821 at I-10 W Mile 387. Deceleration: -8.2 mph/s. No collision reported.', time: '8h ago', source: 'Safety Monitor' },
+  { id: 8, type: 'info' as const, read: true, title: 'Route Update — Dallas → Phoenix', body: 'ETA recalculated: 9h 22m. Weather delay expected near Tucson (dust advisory).', time: '10h ago', source: 'Route Planner' },
+]
+
+const notifTypeConfig = {
+  critical: { color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', dot: 'bg-red-500', shadow: 'shadow-[0_0_6px_rgba(239,68,68,0.5)]', label: 'Critical' },
+  alert: { color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', dot: 'bg-amber-500', shadow: 'shadow-[0_0_6px_rgba(245,158,11,0.5)]', label: 'Alert' },
+  warning: { color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/20', dot: 'bg-orange-400', shadow: 'shadow-[0_0_6px_rgba(251,146,60,0.4)]', label: 'Warning' },
+  info: { color: 'text-[#30BAFF]', bg: 'bg-[#30BAFF]/10', border: 'border-[#30BAFF]/20', dot: 'bg-[#30BAFF]', shadow: 'shadow-[0_0_6px_rgba(48,186,255,0.5)]', label: 'Info' },
+}
+
+type NotifFilter = 'all' | 'unread' | 'critical' | 'alert' | 'warning' | 'info'
+
+// ─── Notifications View ────────────────────────────────────
+function NotificationsView() {
+  const [notifications, setNotifications] = useState(initialNotifications)
+  const [filter, setFilter] = useState<NotifFilter>('all')
+
+  const unreadCount = notifications.filter(n => !n.read).length
+  const criticalCount = notifications.filter(n => n.type === 'critical' && !n.read).length
+
+  const toggleRead = (id: number) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n))
+  }
+
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }
+
+  const filtered = notifications.filter(n => {
+    if (filter === 'unread') return !n.read
+    if (filter === 'all') return true
+    return n.type === filter
+  })
+
+  const filters: { key: NotifFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'unread', label: `Unread (${unreadCount})` },
+    { key: 'critical', label: 'Critical' },
+    { key: 'alert', label: 'Alerts' },
+    { key: 'warning', label: 'Warnings' },
+    { key: 'info', label: 'Info' },
+  ]
+
+  return (
+    <div className="flex-1 flex overflow-hidden">
+      {/* Main notifications list */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex-shrink-0 px-6 pt-4 pb-3 flex items-center justify-between animate-fade-in-down">
+          <div className="flex items-center gap-3">
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-tech font-semibold tracking-wider uppercase transition-all duration-200 press-scale ${
+                  filter === f.key
+                    ? 'bg-[#30BAFF]/15 border border-[#30BAFF]/30 text-[#30BAFF]'
+                    : 'text-gray-600 hover:text-gray-400 border border-transparent'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllRead}
+              className="text-[11px] font-tech text-gray-500 hover:text-[#30BAFF] transition-colors tracking-wider press-scale"
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
+
+        {/* Notification list */}
+        <div className="flex-1 overflow-auto px-6 pb-5">
+          <div className="flex flex-col gap-2">
+            {filtered.map((n, i) => {
+              const cfg = notifTypeConfig[n.type]
+              return (
+                <button
+                  key={n.id}
+                  onClick={() => toggleRead(n.id)}
+                  className={`w-full text-left p-4 rounded-xl border transition-all duration-200 group hover-lift animate-fade-in-up stagger-${Math.min(i + 1, 8)} ${
+                    n.read
+                      ? 'bg-white/[0.01] border-white/[0.04] opacity-60 hover:opacity-80'
+                      : 'bg-white/[0.02] border-white/[0.06] hover:border-[#30BAFF]/15'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Unread dot + type indicator */}
+                    <div className="flex flex-col items-center gap-1 pt-1 flex-shrink-0">
+                      <div className={`w-2 h-2 rounded-full transition-all ${n.read ? 'bg-gray-700' : `${cfg.dot} ${cfg.shadow} animate-pulse`}`} />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded tracking-wider uppercase ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
+                        <span className="font-mono text-[9px] text-gray-700">{n.source}</span>
+                        <span className="font-mono text-[9px] text-gray-700 ml-auto flex-shrink-0">{n.time}</span>
+                      </div>
+                      <h4 className={`font-tech text-sm font-medium tracking-wide mb-1 transition-colors ${n.read ? 'text-gray-500' : 'text-white/80 group-hover:text-white'}`}>
+                        {n.title}
+                      </h4>
+                      <p className="font-mono text-[11px] text-gray-600 leading-relaxed line-clamp-2">{n.body}</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pt-1">
+                      <span className="font-mono text-[9px] text-gray-600 tracking-wider">
+                        {n.read ? 'Mark unread' : 'Mark read'}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+
+            {filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 animate-fade-in-scale">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-gray-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+                <span className="font-tech text-sm text-gray-600 tracking-wide">No notifications match this filter</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* AI Summary sidebar */}
+      <div className="w-[300px] flex-shrink-0 border-l border-white/[0.06] p-5 flex flex-col animate-slide-in-right">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)] animate-pulse" />
+          <span className="font-mono text-[10px] text-[#30BAFF] tracking-wider uppercase">AI Summary</span>
+        </div>
+
+        {/* Stats overview */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] animate-fade-in-up stagger-1">
+            <span className="font-mono text-[9px] text-gray-600 tracking-wider uppercase block mb-1">Unread</span>
+            <span className="font-display text-lg text-white/80">{unreadCount}</span>
+          </div>
+          <div className="p-3 rounded-lg bg-red-500/[0.04] border border-red-500/10 animate-fade-in-up stagger-2">
+            <span className="font-mono text-[9px] text-gray-600 tracking-wider uppercase block mb-1">Critical</span>
+            <span className="font-display text-lg text-red-500">{criticalCount}</span>
+          </div>
+        </div>
+
+        {/* AI insights */}
+        <div className="flex-1 flex flex-col gap-3 overflow-auto">
+          <div className="p-3 rounded-lg bg-red-500/[0.04] border border-red-500/10 animate-fade-in-up stagger-3">
+            <p className="font-tech text-xs text-gray-400 leading-relaxed tracking-wide">
+              <span className="text-red-400 font-semibold">Priority:</span> Unit #4821 has a critical EGR fault (P0401). This may trigger a <span className="text-red-400">roadside inspection failure</span>. Recommend scheduling service at next stop.
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-amber-500/[0.04] border border-amber-500/10 animate-fade-in-up stagger-4">
+            <p className="font-tech text-xs text-gray-400 leading-relaxed tracking-wide">
+              <span className="text-amber-400 font-semibold">Attention:</span> Unscheduled geofence exit detected. Marcus Chen left Distribution Center Alpha without a dispatch record. Verify with dispatch.
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-[#30BAFF]/[0.04] border border-[#30BAFF]/10 animate-fade-in-up stagger-5">
+            <p className="font-tech text-xs text-gray-400 leading-relaxed tracking-wide">
+              <span className="text-[#30BAFF] font-semibold">Overview:</span> 3 unread notifications requiring action. Driver HOS approaching limit — a 30-min break before 20:46 CST will reset the clock. All other systems nominal.
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] animate-fade-in-up stagger-6">
+            <p className="font-tech text-xs text-gray-500 leading-relaxed tracking-wide">
+              Tip: Click any notification to toggle read/unread. Critical items will keep pulsing until acknowledged.
+            </p>
+          </div>
+        </div>
+
+        {/* AI input */}
+        <div className="mt-3 pt-3 border-t border-white/[0.06]">
+          <div className="flex items-center gap-2 rounded-lg bg-white/[0.02] border border-white/[0.06] px-3 py-2 hover:border-[#30BAFF]/15 transition-colors">
+            <span className="font-tech text-xs text-gray-600 flex-1">Ask about alerts...</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+            </svg>
           </div>
         </div>
       </div>
@@ -694,11 +892,11 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div className="flex items-center justify-center h-screen w-screen bg-[#1a1a2e]">
       <Atmosphere />
-      <div className="relative z-10 flex flex-col items-center gap-6">
+      <div className="relative z-10 flex flex-col items-center gap-6 animate-fade-in-up">
         <div className="h-8">
           <VVLogo />
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
           <input
             type="password"
             value={password}
@@ -713,7 +911,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
           />
           <button
             type="submit"
-            className="px-6 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all duration-300"
+            className="px-6 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all duration-300 press-scale"
           >
             Enter
           </button>
@@ -734,6 +932,7 @@ export default function App() {
 
   const pageLabels: Record<string, string> = {
     search: 'Search',
+    notifications: 'Notifications',
     home: 'Home Dashboard',
     vehicles: 'Vehicle Management',
     messages: 'Messages',
@@ -766,10 +965,12 @@ export default function App() {
           />
 
           <main className="flex-1 flex flex-col relative min-w-0 z-10">
-            <Header activePage={activePage} />
+            <Header activePage={activePage} onNavigate={setActivePage} />
 
             {activePage === 'search' ? (
               <SearchView />
+            ) : activePage === 'notifications' ? (
+              <NotificationsView />
             ) : (
               <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
                 <BrowserControls />
