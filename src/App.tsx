@@ -250,8 +250,95 @@ function BrowserControls() {
   )
 }
 
+// ─── Portal Types & Defaults ────────────────────────────────
+interface Portal {
+  id: string
+  name: string
+  url: string
+  color: string
+}
+
+const portalColors = ['#30BAFF', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6']
+
+// ─── Add Portal Modal ──────────────────────────────────────
+function AddPortalModal({ onAdd, onClose, portalCount }: { onAdd: (p: Portal) => void; onClose: () => void; portalCount: number }) {
+  const [name, setName] = useState('')
+  const [url, setUrl] = useState('')
+
+  const handleAdd = () => {
+    if (!name.trim() || !url.trim()) return
+    const color = portalColors[portalCount % portalColors.length]
+    onAdd({ id: Date.now().toString(), name: name.trim(), url: url.trim(), color })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in-scale" style={{ animationDuration: '0.2s' }} />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-md mx-4 animate-fade-in-up" onClick={e => e.stopPropagation()}>
+        <div className="rounded-2xl bg-[#0c1424] border border-white/[0.1] shadow-[0_25px_80px_rgba(0,0,0,0.6),0_0_40px_rgba(48,186,255,0.05)] overflow-hidden">
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-[#30BAFF]/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#30BAFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-display text-sm font-semibold tracking-wider text-white/90">Connect Portal</h3>
+                <p className="font-mono text-[10px] text-gray-600">Add a new portal to your workspace</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="px-6 pb-2 flex flex-col gap-3">
+            <div>
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-1.5">Name</label>
+              <input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="e.g. Fleet Manager"
+                autoFocus
+                className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-tech text-white/80 tracking-wide placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 focus:shadow-[0_0_12px_rgba(48,186,255,0.06)] transition-all"
+              />
+            </div>
+            <div>
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-1.5">URL</label>
+              <input
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                placeholder="https://portal-url.com"
+                onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-mono text-white/60 placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 focus:shadow-[0_0_12px_rgba(48,186,255,0.06)] transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="px-6 py-5 flex items-center justify-end gap-2">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-white/[0.08] text-xs font-tech text-gray-500 hover:text-gray-400 transition-all press-scale tracking-wider">
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              disabled={!name.trim() || !url.trim()}
+              className="px-5 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] text-xs font-tech font-semibold tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all press-scale disabled:opacity-30 disabled:pointer-events-none"
+            >
+              Connect Portal
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Content Frame ──────────────────────────────────────────
-function ContentFrame() {
+function ContentFrame({ portals, onAddPortal }: { portals: Portal[]; onAddPortal: () => void }) {
   return (
     <div className="flex-1 w-full rounded-xl border border-[#30BAFF]/15 animate-pulse-glow animate-glow-in iframe-container relative overflow-hidden">
       {/* Corner accents */}
@@ -264,131 +351,222 @@ function ContentFrame() {
       <div className="absolute bottom-0 right-0 w-8 h-px bg-gradient-to-l from-[#30BAFF]/40 to-transparent" />
       <div className="absolute bottom-0 right-0 w-px h-8 bg-gradient-to-t from-[#30BAFF]/40 to-transparent" />
 
-      <div className="w-full h-full flex flex-col items-center justify-center relative">
+      <div className="w-full h-full relative overflow-auto">
         {/* Inner atmosphere */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#30BAFF] opacity-[0.02] rounded-full blur-[100px]" />
         </div>
 
-        <div className="z-10 flex flex-col items-center gap-6 animate-fade-in-scale">
-          {/* Energy orb */}
-          <div className="w-20 h-20 flex items-center justify-center relative">
-            <svg viewBox="0 0 80 80" className="w-20 h-20 absolute" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <filter id="orb-glow">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <filter id="orb-glow-hot">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <radialGradient id="orb-grad" cx="38%" cy="32%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7" />
-                  <stop offset="20%" stopColor="#30BAFF" stopOpacity="0.6" />
-                  <stop offset="60%" stopColor="#30BAFF" stopOpacity="0.2" />
-                  <stop offset="100%" stopColor="#1a6faa" stopOpacity="0" />
-                </radialGradient>
-                <radialGradient id="orb-grad2" cx="55%" cy="60%">
-                  <stop offset="0%" stopColor="#30BAFF" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#30BAFF" stopOpacity="0" />
-                </radialGradient>
-              </defs>
+        {portals.length === 0 ? (
+          /* ── Empty State ── */
+          <div className="w-full h-full flex flex-col items-center justify-center relative">
+            <div className="z-10 flex flex-col items-center gap-6 animate-fade-in-scale">
+              {/* Energy orb */}
+              <div className="w-20 h-20 flex items-center justify-center relative">
+                <svg viewBox="0 0 80 80" className="w-20 h-20 absolute" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <filter id="orb-glow">
+                      <feGaussianBlur stdDeviation="4" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    <filter id="orb-glow-hot">
+                      <feGaussianBlur stdDeviation="6" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    <radialGradient id="orb-grad" cx="38%" cy="32%">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7" />
+                      <stop offset="20%" stopColor="#30BAFF" stopOpacity="0.6" />
+                      <stop offset="60%" stopColor="#30BAFF" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#1a6faa" stopOpacity="0" />
+                    </radialGradient>
+                    <radialGradient id="orb-grad2" cx="55%" cy="60%">
+                      <stop offset="0%" stopColor="#30BAFF" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#30BAFF" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="40" cy="40" r="24" fill="none" stroke="#30BAFF" strokeWidth="0.4" opacity="0.1" className="animate-orb-ring" />
+                  <circle cx="40" cy="40" r="20" fill="none" stroke="#30BAFF" strokeWidth="0.6" opacity="0.08" className="animate-orb-ring2" />
+                  <path fill="url(#orb-grad2)" opacity="0.6" filter="url(#orb-glow)">
+                    <animate attributeName="d" dur="1.8s" repeatCount="indefinite" values="M40,24 C50,24 56,30 56,40 C56,50 50,56 40,56 C30,56 24,50 24,40 C24,30 30,24 40,24Z;M42,22 C54,26 58,34 54,44 C50,54 40,58 32,54 C24,50 20,38 26,28 C32,18 36,20 42,22Z;M38,23 C48,20 58,30 56,42 C54,54 44,58 34,54 C24,50 20,40 24,30 C28,20 30,24 38,23Z;M40,24 C50,24 56,30 56,40 C56,50 50,56 40,56 C30,56 24,50 24,40 C24,30 30,24 40,24Z" calcMode="spline" keySplines="0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1" />
+                  </path>
+                  <path fill="url(#orb-grad)" filter="url(#orb-glow-hot)">
+                    <animate attributeName="d" dur="2.2s" repeatCount="indefinite" values="M40,22 C52,22 58,30 58,40 C58,52 50,58 40,58 C28,58 22,50 22,40 C22,28 30,22 40,22Z;M44,20 C56,26 60,36 54,46 C48,56 36,60 28,54 C20,48 18,36 24,26 C30,16 34,18 44,20Z;M36,19 C48,16 62,28 58,42 C54,56 42,62 30,56 C18,50 14,36 22,24 C30,12 28,20 36,19Z;M43,21 C55,24 60,38 54,48 C48,58 34,60 26,52 C18,44 18,30 26,22 C34,14 35,20 43,21Z;M37,20 C50,18 60,30 58,44 C56,56 44,60 32,56 C20,52 16,40 20,28 C24,16 28,20 37,20Z;M40,22 C52,22 58,30 58,40 C58,52 50,58 40,58 C28,58 22,50 22,40 C22,28 30,22 40,22Z" calcMode="spline" keySplines="0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1" />
+                  </path>
+                  <circle cx="40" cy="40" r="8" fill="#30BAFF" opacity="0.15" className="animate-orb-core" />
+                  <circle cx="40" cy="40" r="4" fill="#30BAFF" opacity="0.4" className="animate-orb-core-bright" />
+                  <circle cx="40" cy="40" r="1.5" fill="#ffffff" opacity="0.6" className="animate-orb-core-bright" />
+                </svg>
+              </div>
 
-              {/* Outer pulsing ring 1 */}
-              <circle cx="40" cy="40" r="24" fill="none" stroke="#30BAFF" strokeWidth="0.4" opacity="0.1" className="animate-orb-ring" />
-              {/* Outer pulsing ring 2 - offset */}
-              <circle cx="40" cy="40" r="20" fill="none" stroke="#30BAFF" strokeWidth="0.6" opacity="0.08" className="animate-orb-ring2" />
+              <div className="text-center">
+                <h3 className="font-display text-xl font-semibold tracking-wider text-white/90 text-glow-sm mb-3">Welcome to VV Nano</h3>
+                <p className="font-tech text-sm text-gray-500 max-w-sm leading-relaxed tracking-wide">
+                  Looks like you don't have any connected portals yet.
+                </p>
+              </div>
 
-              {/* Secondary blob - counter-rotating */}
-              <path fill="url(#orb-grad2)" opacity="0.6" filter="url(#orb-glow)">
-                <animate
-                  attributeName="d"
-                  dur="1.8s"
-                  repeatCount="indefinite"
-                  values="
-                    M40,24 C50,24 56,30 56,40 C56,50 50,56 40,56 C30,56 24,50 24,40 C24,30 30,24 40,24Z;
-                    M42,22 C54,26 58,34 54,44 C50,54 40,58 32,54 C24,50 20,38 26,28 C32,18 36,20 42,22Z;
-                    M38,23 C48,20 58,30 56,42 C54,54 44,58 34,54 C24,50 20,40 24,30 C28,20 30,24 38,23Z;
-                    M40,24 C50,24 56,30 56,40 C56,50 50,56 40,56 C30,56 24,50 24,40 C24,30 30,24 40,24Z
-                  "
-                  calcMode="spline"
-                  keySplines="0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1"
-                />
-              </path>
+              <button onClick={onAddPortal} className="mt-2 px-6 py-2.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all duration-300 press-scale">
+                Start Setup
+              </button>
 
-              {/* Primary morphing blob */}
-              <path fill="url(#orb-grad)" filter="url(#orb-glow-hot)">
-                <animate
-                  attributeName="d"
-                  dur="2.2s"
-                  repeatCount="indefinite"
-                  values="
-                    M40,22 C52,22 58,30 58,40 C58,52 50,58 40,58 C28,58 22,50 22,40 C22,28 30,22 40,22Z;
-                    M44,20 C56,26 60,36 54,46 C48,56 36,60 28,54 C20,48 18,36 24,26 C30,16 34,18 44,20Z;
-                    M36,19 C48,16 62,28 58,42 C54,56 42,62 30,56 C18,50 14,36 22,24 C30,12 28,20 36,19Z;
-                    M43,21 C55,24 60,38 54,48 C48,58 34,60 26,52 C18,44 18,30 26,22 C34,14 35,20 43,21Z;
-                    M37,20 C50,18 60,30 58,44 C56,56 44,60 32,56 C20,52 16,40 20,28 C24,16 28,20 37,20Z;
-                    M40,22 C52,22 58,30 58,40 C58,52 50,58 40,58 C28,58 22,50 22,40 C22,28 30,22 40,22Z
-                  "
-                  calcMode="spline"
-                  keySplines="0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1; 0.25 0.1 0.25 1"
-                />
-              </path>
+              <div className="flex gap-2 mt-2">
+                <div className="w-1 h-1 rounded-full bg-gray-600 shadow-[0_0_6px_rgba(107,114,128,0.3)] animate-pulse" />
+                <div className="w-1 h-1 rounded-full bg-gray-600 shadow-[0_0_6px_rgba(107,114,128,0.3)] animate-pulse" style={{ animationDelay: '150ms' }} />
+                <div className="w-1 h-1 rounded-full bg-gray-600 shadow-[0_0_6px_rgba(107,114,128,0.3)] animate-pulse" style={{ animationDelay: '300ms' }} />
+              </div>
 
-              {/* Hot core - pulsing */}
-              <circle cx="40" cy="40" r="8" fill="#30BAFF" opacity="0.15" className="animate-orb-core" />
-              <circle cx="40" cy="40" r="4" fill="#30BAFF" opacity="0.4" className="animate-orb-core-bright" />
-              <circle cx="40" cy="40" r="1.5" fill="#ffffff" opacity="0.6" className="animate-orb-core-bright" />
-            </svg>
-          </div>
-
-          {/* Text */}
-          <div className="text-center">
-            <h3 className="font-display text-xl font-semibold tracking-wider text-white/90 text-glow-sm mb-3">Welcome to VV Nano</h3>
-            <p className="font-tech text-sm text-gray-500 max-w-sm leading-relaxed tracking-wide">
-              Looks like you don't have any connected portals yet.
-            </p>
-          </div>
-
-          {/* Start Setup button */}
-          <button className="mt-2 px-6 py-2.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] font-tech font-semibold text-sm tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 hover:shadow-[0_0_20px_rgba(48,186,255,0.15)] transition-all duration-300 press-scale">
-            Start Setup
-          </button>
-
-          {/* Waiting dots */}
-          <div className="flex gap-2 mt-2">
-            <div className="w-1 h-1 rounded-full bg-gray-600 shadow-[0_0_6px_rgba(107,114,128,0.3)] animate-pulse" />
-            <div className="w-1 h-1 rounded-full bg-gray-600 shadow-[0_0_6px_rgba(107,114,128,0.3)] animate-pulse" style={{ animationDelay: '150ms' }} />
-            <div className="w-1 h-1 rounded-full bg-gray-600 shadow-[0_0_6px_rgba(107,114,128,0.3)] animate-pulse" style={{ animationDelay: '300ms' }} />
-          </div>
-
-          {/* Status readout - disconnected */}
-          <div className="flex items-center gap-6 mt-4">
-            <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
-              <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Status</span>
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)] animate-pulse" />
-              <span className="font-mono text-[10px] text-red-500">Disconnected</span>
-            </div>
-            <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
-              <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Latency</span>
-              <span className="font-mono text-[10px] text-gray-600">--ms</span>
-            </div>
-            <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
-              <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Portals</span>
-              <span className="font-mono text-[10px] text-gray-600">0</span>
+              <div className="flex items-center gap-6 mt-4">
+                <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
+                  <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Status</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)] animate-pulse" />
+                  <span className="font-mono text-[10px] text-red-500">Disconnected</span>
+                </div>
+                <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
+                  <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Latency</span>
+                  <span className="font-mono text-[10px] text-gray-600">--ms</span>
+                </div>
+                <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
+                  <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Portals</span>
+                  <span className="font-mono text-[10px] text-gray-600">0</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* ── Connected State — Portal Thumbnails ── */
+          <div className="w-full h-full p-6 relative z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5 animate-fade-in-down">
+              <div>
+                <h3 className="font-display text-sm font-semibold tracking-wider text-white/80">Your Portals</h3>
+                <p className="font-mono text-[10px] text-gray-600 mt-0.5">{portals.length} connected</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                  <span className="font-mono text-[10px] text-emerald-500 tracking-wider">Online</span>
+                </div>
+                <button onClick={onAddPortal} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/20 text-[#30BAFF] text-[11px] font-tech font-semibold tracking-wider hover:bg-[#30BAFF]/15 hover:border-[#30BAFF]/30 transition-all press-scale">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Add Portal
+                </button>
+              </div>
+            </div>
+
+            {/* Portal grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {portals.map((p, i) => {
+                const domain = (() => { try { return new URL(p.url).hostname } catch { return p.url } })()
+                return (
+                  <button
+                    key={p.id}
+                    className={`group relative rounded-xl overflow-hidden border border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 hover-lift text-left animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
+                  >
+                    {/* Thumbnail preview area */}
+                    <div className="h-36 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${p.color}08 0%, ${p.color}03 50%, transparent 100%)` }}>
+                      {/* Fake browser chrome */}
+                      <div className="absolute top-0 inset-x-0 h-7 bg-black/20 flex items-center px-3 gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                        <div className="flex-1 mx-2 h-3 rounded bg-white/[0.04] flex items-center px-2">
+                          <span className="font-mono text-[7px] text-gray-600 truncate">{domain}</span>
+                        </div>
+                      </div>
+
+                      {/* Fake page content lines */}
+                      <div className="absolute top-10 left-4 right-4 flex flex-col gap-2">
+                        <div className="h-2 rounded-full w-3/4" style={{ backgroundColor: `${p.color}15` }} />
+                        <div className="h-1.5 rounded-full w-full bg-white/[0.03]" />
+                        <div className="h-1.5 rounded-full w-5/6 bg-white/[0.03]" />
+                        <div className="h-1.5 rounded-full w-2/3 bg-white/[0.02]" />
+                        <div className="mt-2 flex gap-2">
+                          <div className="h-8 w-16 rounded" style={{ backgroundColor: `${p.color}10` }} />
+                          <div className="h-8 w-16 rounded bg-white/[0.02]" />
+                        </div>
+                        <div className="h-1.5 rounded-full w-full bg-white/[0.02]" />
+                        <div className="h-1.5 rounded-full w-4/5 bg-white/[0.02]" />
+                      </div>
+
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-3">
+                        <span className="font-tech text-xs text-white/80 tracking-wider flex items-center gap-1.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                          </svg>
+                          Open Portal
+                        </span>
+                      </div>
+
+                      {/* Corner accent */}
+                      <div className="absolute top-0 left-0 w-6 h-px" style={{ background: `linear-gradient(to right, ${p.color}60, transparent)` }} />
+                      <div className="absolute top-0 left-0 w-px h-6" style={{ background: `linear-gradient(to bottom, ${p.color}60, transparent)` }} />
+                    </div>
+
+                    {/* Info bar */}
+                    <div className="p-3 bg-white/[0.02]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${p.color}15`, border: `1px solid ${p.color}25` }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" style={{ color: p.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-tech text-xs text-white/70 font-medium tracking-wide truncate group-hover:text-white/90 transition-colors">{p.name}</p>
+                          <p className="font-mono text-[9px] text-gray-600 truncate">{domain}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+
+              {/* Add portal card */}
+              <button
+                onClick={onAddPortal}
+                className="rounded-xl border border-dashed border-white/[0.08] hover:border-[#30BAFF]/25 transition-all duration-200 flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#30BAFF] group press-scale min-h-[200px]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white/[0.03] group-hover:bg-[#30BAFF]/10 border border-white/[0.06] group-hover:border-[#30BAFF]/20 flex items-center justify-center transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </div>
+                <span className="font-tech text-xs tracking-wide">Add Portal</span>
+              </button>
+            </div>
+
+            {/* Status bar */}
+            <div className="flex items-center gap-6 mt-5 animate-fade-in-up stagger-6">
+              <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
+                <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Status</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                <span className="font-mono text-[10px] text-emerald-500">Connected</span>
+              </div>
+              <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
+                <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Latency</span>
+                <span className="font-mono text-[10px] text-[#30BAFF]">24ms</span>
+              </div>
+              <div className="flex items-center gap-2 border-l-2 border-gray-800 pl-3">
+                <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Portals</span>
+                <span className="font-mono text-[10px] text-[#30BAFF]">{portals.length}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1423,43 +1601,16 @@ function AccountView({ onLogout }: { onLogout: () => void }) {
 // ─── Settings View ────────────────────────────────────────
 type ThemeMode = 'dark' | 'light' | 'system'
 
-interface Portal {
-  id: string
-  name: string
-  url: string
-  color: string
-}
-
-const defaultPortals: Portal[] = [
-  { id: '1', name: 'Platform Science Demo', url: 'https://demo.platformscience.com', color: '#30BAFF' },
-  { id: '2', name: 'Connected Fleet Central', url: 'https://connectedfleetcentral-staging.connectedfleet.io/#/dashboard', color: '#8B5CF6' },
-  { id: '3', name: 'App Launcher (Staging)', url: 'https://app-launcher-stg-ec29c2dc.appspot.com/welcome', color: '#F59E0B' },
-]
-
-function SettingsView() {
+function SettingsView({ portals, onAddPortal, onRemovePortal, onEditPortal }: {
+  portals: Portal[]
+  onAddPortal: () => void
+  onRemovePortal: (id: string) => void
+  onEditPortal: (id: string, name: string, url: string) => void
+}) {
   const [themeMode, setThemeMode] = useState<ThemeMode>('dark')
-  const [portals, setPortals] = useState<Portal[]>(defaultPortals)
-  const [showAddPortal, setShowAddPortal] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newUrl, setNewUrl] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editUrl, setEditUrl] = useState('')
-
-  const portalColors = ['#30BAFF', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6']
-
-  const addPortal = () => {
-    if (!newName.trim() || !newUrl.trim()) return
-    const color = portalColors[portals.length % portalColors.length]
-    setPortals(prev => [...prev, { id: Date.now().toString(), name: newName.trim(), url: newUrl.trim(), color }])
-    setNewName('')
-    setNewUrl('')
-    setShowAddPortal(false)
-  }
-
-  const removePortal = (id: string) => {
-    setPortals(prev => prev.filter(p => p.id !== id))
-  }
 
   const startEdit = (p: Portal) => {
     setEditingId(p.id)
@@ -1469,7 +1620,7 @@ function SettingsView() {
 
   const saveEdit = () => {
     if (!editName.trim() || !editUrl.trim() || !editingId) return
-    setPortals(prev => prev.map(p => p.id === editingId ? { ...p, name: editName.trim(), url: editUrl.trim() } : p))
+    onEditPortal(editingId, editName.trim(), editUrl.trim())
     setEditingId(null)
   }
 
@@ -1635,7 +1786,7 @@ function SettingsView() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => removePortal(p.id)}
+                        onClick={() => onRemovePortal(p.id)}
                         className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/5 transition-all"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -1649,48 +1800,15 @@ function SettingsView() {
             ))}
 
             {/* Add portal */}
-            {showAddPortal ? (
-              <div className="rounded-xl bg-white/[0.02] border border-[#30BAFF]/15 p-4 animate-fade-in-scale">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)]" />
-                    <span className="font-mono text-[10px] text-[#30BAFF] tracking-wider uppercase">New Portal</span>
-                  </div>
-                  <input
-                    value={newName}
-                    onChange={e => setNewName(e.target.value)}
-                    placeholder="Portal name (e.g. Fleet Manager)"
-                    autoFocus
-                    className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-tech text-white/80 tracking-wide placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 transition-all"
-                  />
-                  <input
-                    value={newUrl}
-                    onChange={e => setNewUrl(e.target.value)}
-                    placeholder="https://portal-url.com"
-                    onKeyDown={e => e.key === 'Enter' && addPortal()}
-                    className="w-full px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm font-mono text-white/60 placeholder-gray-600 outline-none focus:border-[#30BAFF]/30 transition-all"
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button onClick={() => { setShowAddPortal(false); setNewName(''); setNewUrl('') }} className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:text-gray-400 transition-all press-scale tracking-wider">
-                      Cancel
-                    </button>
-                    <button onClick={addPortal} className="px-4 py-1.5 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[11px] font-tech text-[#30BAFF] font-semibold hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 transition-all press-scale tracking-wider">
-                      Add Portal
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAddPortal(true)}
-                className="w-full p-4 rounded-xl border border-dashed border-white/[0.08] hover:border-[#30BAFF]/25 text-gray-600 hover:text-[#30BAFF] transition-all duration-200 flex items-center justify-center gap-2 group press-scale"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                <span className="font-tech text-sm tracking-wide">Add Portal</span>
-              </button>
-            )}
+            <button
+              onClick={onAddPortal}
+              className="w-full p-4 rounded-xl border border-dashed border-white/[0.08] hover:border-[#30BAFF]/25 text-gray-600 hover:text-[#30BAFF] transition-all duration-200 flex items-center justify-center gap-2 group press-scale"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span className="font-tech text-sm tracking-wide">Add Portal</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1754,7 +1872,21 @@ export default function App() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('vv-auth') === '1')
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [activePage, setActivePage] = useState('home')
+  const [portals, setPortals] = useState<Portal[]>([])
+  const [showPortalModal, setShowPortalModal] = useState(false)
 
+  const addPortal = (p: Portal) => {
+    setPortals(prev => [...prev, p])
+    setShowPortalModal(false)
+  }
+
+  const removePortal = (id: string) => {
+    setPortals(prev => prev.filter(p => p.id !== id))
+  }
+
+  const editPortal = (id: string, name: string, url: string) => {
+    setPortals(prev => prev.map(p => p.id === id ? { ...p, name, url } : p))
+  }
 
   if (!authed) return <PasswordGate onUnlock={() => setAuthed(true)} />
 
@@ -1788,16 +1920,21 @@ export default function App() {
             ) : activePage === 'account' ? (
               <AccountView onLogout={() => { sessionStorage.removeItem('vv-auth'); setAuthed(false) }} />
             ) : activePage === 'settings' ? (
-              <SettingsView />
+              <SettingsView portals={portals} onAddPortal={() => setShowPortalModal(true)} onRemovePortal={removePortal} onEditPortal={editPortal} />
             ) : (
               <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
                 <BrowserControls />
-                <ContentFrame />
+                <ContentFrame portals={portals} onAddPortal={() => setShowPortalModal(true)} />
               </div>
             )}
           </main>
         </div>
       </div>
+
+      {/* Add Portal Modal */}
+      {showPortalModal && (
+        <AddPortalModal onAdd={addPortal} onClose={() => setShowPortalModal(false)} portalCount={portals.length} />
+      )}
     </div>
   )
 }
