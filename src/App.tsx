@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 // ─── Logo ───────────────────────────────────────────────────
 const VVLogo = () => (
@@ -29,7 +29,12 @@ function Atmosphere() {
 
 // ─── Nav Items ──────────────────────────────────────────────
 const navItems = [
-  { id: 'home', label: 'Home', icon: (
+  { id: 'search', label: 'Search', icon: (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+    </svg>
+  )},
+  { id: 'home', label: 'Home', divider: true, icon: (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
     </svg>
@@ -158,6 +163,7 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate }: {
 // ─── Header ─────────────────────────────────────────────────
 function Header({ activePage }: { activePage: string }) {
   const pageLabels: Record<string, string> = {
+    search: 'SEARCH',
     home: 'HOME',
     vehicles: 'VEHICLES',
     messages: 'MESSAGES',
@@ -397,6 +403,278 @@ function TrafficLights() {
   )
 }
 
+// ─── Search Data ───────────────────────────────────────────
+const searchFilters = ['Vehicles', 'Faults', 'Drivers', 'Alerts', 'ELD', 'DVIR', 'GPS', 'Routes']
+
+const searchSuggestions: Record<string, string[]> = {
+  v: ['Vehicle diagnostics', 'VIN lookup', 'Vehicle location tracking', 'Voltage monitoring'],
+  f: ['Fault code P0301', 'Fleet fuel consumption', 'FMCSA compliance check', 'Firmware update status'],
+  d: ['Driver HOS summary', 'DVIR submissions', 'Driver scorecard', 'Dispatch route history'],
+  e: ['ELD connection status', 'Engine hours report', 'ECM data stream', 'ELD malfunction alerts'],
+  g: ['GPS position history', 'Geofence violations', 'GPS signal strength', 'Gateway device status'],
+  r: ['Route optimization', 'Real-time engine data', 'Regulatory alerts', 'Rest break compliance'],
+  a: ['Active fault codes', 'Alert configuration', 'Asset utilization report', 'Ambient temperature log'],
+  h: ['HOS violations', 'Hard braking events', 'Harsh acceleration log', 'Hub odometer reading'],
+  s: ['Speed limit violations', 'Service reminders', 'SPN/FMI fault lookup', 'Seatbelt compliance'],
+  t: ['Tire pressure monitoring', 'Trip history', 'Telematics device health', 'Terminal assignments'],
+  p: ['Platform Science portal', 'Pre-trip inspection', 'Power take-off usage', 'Predictive maintenance'],
+  c: ['CSA score breakdown', 'Carrier profile', 'CAN bus diagnostics', 'Compliance dashboard'],
+}
+
+const mockResults = [
+  { category: 'Vehicle', title: 'Unit #4821 — Freightliner Cascadia', subtitle: 'Last seen: I-10 W, Mile 342 · 12 min ago', status: 'Active', statusColor: 'text-[#30BAFF]' },
+  { category: 'Fault', title: 'P0401 — EGR Flow Insufficient', subtitle: 'Detected on Unit #4821 · SPN 27 / FMI 4', status: 'Critical', statusColor: 'text-red-500' },
+  { category: 'Driver', title: 'Marcus Chen — CDL #TX-8841927', subtitle: 'HOS: 6h 14m remaining · Driving', status: 'On Duty', statusColor: 'text-[#30BAFF]' },
+  { category: 'ELD', title: 'ELD Device #PS-90042', subtitle: 'Connected to Unit #4821 · Firmware v3.8.1', status: 'Connected', statusColor: 'text-[#30BAFF]' },
+  { category: 'Alert', title: 'Geofence Exit — Distribution Center Alpha', subtitle: 'Unit #4821 exited zone at 14:32 CST', status: 'Warning', statusColor: 'text-amber-500' },
+  { category: 'Route', title: 'Dallas → Phoenix — Route 1042', subtitle: 'ETA: 9h 22m · 642 miles remaining', status: 'In Transit', statusColor: 'text-[#30BAFF]' },
+]
+
+// ─── Search View ───────────────────────────────────────────
+function SearchView() {
+  const [query, setQuery] = useState('')
+  const [activeFilters, setActiveFilters] = useState<string[]>([])
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const firstChar = query.trim().toLowerCase().charAt(0)
+  const suggestions = firstChar ? (searchSuggestions[firstChar] || []) : []
+
+  const handleSearch = () => {
+    if (query.trim()) {
+      setHasSearched(true)
+      setShowDropdown(false)
+    }
+  }
+
+  const handleSelect = (suggestion: string) => {
+    setQuery(suggestion)
+    setShowDropdown(false)
+    setHasSearched(true)
+  }
+
+  const toggleFilter = (f: string) => {
+    setActiveFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
+  }
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.parentElement?.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  // Pre-search: centered hero layout
+  if (!hasSearched) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center relative overflow-auto">
+        {/* Inner atmosphere */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#30BAFF] opacity-[0.02] rounded-full blur-[100px]" />
+        </div>
+
+        <div className="z-10 flex flex-col items-center w-full max-w-[680px] px-4">
+          <h2 className="font-display text-2xl font-semibold tracking-wider text-white/90 text-glow-sm mb-8">
+            Search across all portals
+          </h2>
+
+          {/* Search bar */}
+          <div className="relative w-full mb-5">
+            <div className="flex items-center w-full rounded-2xl bg-black/30 border-2 border-[#30BAFF]/20 focus-within:border-[#30BAFF]/40 transition-all duration-300 overflow-hidden">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setShowDropdown(e.target.value.length > 0) }}
+                onFocus={() => query.length > 0 && setShowDropdown(true)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Search vehicles, faults, drivers, routes..."
+                className="flex-1 bg-transparent px-6 py-5 text-[16px] font-tech text-white/80 placeholder-gray-600 outline-none tracking-wide"
+              />
+              <button
+                onClick={handleSearch}
+                className="m-2 w-12 h-12 rounded-xl bg-gradient-to-b from-[#1e6298] to-[#244151] flex items-center justify-center hover:from-[#2878b5] hover:to-[#2d5470] transition-all flex-shrink-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Dropdown suggestions */}
+            {showDropdown && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-[#0c1424] border border-white/[0.08] shadow-[0_15px_50px_rgba(0,0,0,0.5)] overflow-hidden z-50">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSelect(s)}
+                    className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-[#30BAFF]/5 transition-colors group"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600 group-hover:text-[#30BAFF] transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    <span className="font-tech text-sm text-gray-400 group-hover:text-white/80 tracking-wide transition-colors">{s}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Filter pills */}
+          <div className="flex flex-wrap gap-2 justify-center">
+            {searchFilters.map((f) => (
+              <button
+                key={f}
+                onClick={() => toggleFilter(f)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-semibold font-tech tracking-wider uppercase transition-all duration-200 ${
+                  activeFilters.includes(f)
+                    ? 'bg-[#30BAFF]/15 border-[#30BAFF]/40 text-[#30BAFF]'
+                    : 'bg-[#323232]/40 border-[#30BAFF]/15 text-gray-500 hover:border-[#30BAFF]/30 hover:text-gray-400'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Post-search: results layout
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Compact search bar at top */}
+      <div className="flex-shrink-0 px-6 pt-4 pb-3">
+        <div className="relative w-full max-w-[680px]">
+          <div className="flex items-center w-full rounded-xl bg-black/30 border border-[#30BAFF]/15 focus-within:border-[#30BAFF]/30 transition-all overflow-hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600 ml-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setShowDropdown(e.target.value.length > 0) }}
+              onFocus={() => query.length > 0 && setShowDropdown(true)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="flex-1 bg-transparent px-3 py-3 text-sm font-tech text-white/80 placeholder-gray-600 outline-none tracking-wide"
+            />
+            <button
+              onClick={() => { setHasSearched(false); setQuery('') }}
+              className="px-3 py-1 mr-2 text-xs font-tech text-gray-500 hover:text-[#30BAFF] transition-colors tracking-wider"
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Filter pills — compact */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {searchFilters.map((f) => (
+              <button
+                key={f}
+                onClick={() => toggleFilter(f)}
+                className={`px-3 py-1 rounded-full border text-[10px] font-semibold font-tech tracking-wider uppercase transition-all ${
+                  activeFilters.includes(f)
+                    ? 'bg-[#30BAFF]/15 border-[#30BAFF]/40 text-[#30BAFF]'
+                    : 'bg-transparent border-white/[0.06] text-gray-600 hover:border-[#30BAFF]/20 hover:text-gray-500'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          {/* Dropdown */}
+          {showDropdown && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 rounded-xl bg-[#0c1424] border border-white/[0.08] shadow-[0_15px_50px_rgba(0,0,0,0.5)] overflow-hidden z-50">
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSelect(s)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[#30BAFF]/5 transition-colors group"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-600 group-hover:text-[#30BAFF] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                  <span className="font-tech text-xs text-gray-400 group-hover:text-white/80 tracking-wide">{s}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Results */}
+      <div className="flex-1 overflow-auto px-6 pb-5">
+        <div className="flex gap-4 h-full">
+          {/* Left column — results cards */}
+          <div className="flex-1 flex flex-col gap-3 min-w-0">
+            <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase mb-1">{mockResults.length} results for "{query}"</span>
+            {mockResults.map((r, i) => (
+              <button
+                key={i}
+                className="w-full text-left p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#30BAFF]/20 hover:bg-[#30BAFF]/[0.03] transition-all duration-200 group"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-[#30BAFF]/10 text-[#30BAFF]/70 tracking-wider uppercase">{r.category}</span>
+                    </div>
+                    <h4 className="font-tech text-sm text-white/80 group-hover:text-white font-medium tracking-wide truncate transition-colors">{r.title}</h4>
+                    <p className="font-mono text-[11px] text-gray-600 mt-1 truncate">{r.subtitle}</p>
+                  </div>
+                  <span className={`font-mono text-[10px] tracking-wider flex-shrink-0 mt-1 ${r.statusColor}`}>{r.status}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Right column — detail / AI panel */}
+          <div className="w-[320px] flex-shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.01] p-5 flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)] animate-pulse" />
+              <span className="font-mono text-[10px] text-[#30BAFF] tracking-wider uppercase">AI Assistant</span>
+            </div>
+            <div className="flex-1 flex flex-col gap-3 overflow-auto">
+              <div className="p-3 rounded-lg bg-[#30BAFF]/[0.04] border border-[#30BAFF]/10">
+                <p className="font-tech text-xs text-gray-400 leading-relaxed tracking-wide">
+                  Found <span className="text-[#30BAFF]">6 results</span> across your portals. Unit #4821 has an active fault code that may need attention — <span className="text-red-400">P0401 EGR Flow Insufficient</span> was detected 23 minutes ago.
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                <p className="font-tech text-xs text-gray-500 leading-relaxed tracking-wide">
+                  Driver Marcus Chen is currently on duty with 6h 14m HOS remaining. The unit is en route Dallas → Phoenix with an ETA of 9h 22m.
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                <p className="font-tech text-xs text-gray-500 leading-relaxed tracking-wide">
+                  Tip: Click any result card to view full details in the portal viewer.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-white/[0.06]">
+              <div className="flex items-center gap-2 rounded-lg bg-white/[0.02] border border-white/[0.06] px-3 py-2">
+                <span className="font-tech text-xs text-gray-600 flex-1">Ask a follow-up...</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Password Gate ─────────────────────────────────────────
 function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState('')
@@ -455,6 +733,7 @@ export default function App() {
   const [activePage, setActivePage] = useState('home')
 
   const pageLabels: Record<string, string> = {
+    search: 'Search',
     home: 'Home Dashboard',
     vehicles: 'Vehicle Management',
     messages: 'Messages',
@@ -489,10 +768,14 @@ export default function App() {
           <main className="flex-1 flex flex-col relative min-w-0 z-10">
             <Header activePage={activePage} />
 
-            <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
-              <BrowserControls />
-              <ContentFrame label={pageLabels[activePage] || 'Content'} />
-            </div>
+            {activePage === 'search' ? (
+              <SearchView />
+            ) : (
+              <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
+                <BrowserControls />
+                <ContentFrame label={pageLabels[activePage] || 'Content'} />
+              </div>
+            )}
           </main>
         </div>
       </div>
