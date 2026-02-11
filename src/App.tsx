@@ -250,7 +250,7 @@ function BrowserControls() {
 }
 
 // ─── Content Frame ──────────────────────────────────────────
-function ContentFrame({ label }: { label: string }) {
+function ContentFrame() {
   return (
     <div className="flex-1 w-full rounded-xl border border-[#30BAFF]/15 animate-pulse-glow animate-glow-in iframe-container relative overflow-hidden">
       {/* Corner accents */}
@@ -974,7 +974,7 @@ export default function App() {
             ) : (
               <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
                 <BrowserControls />
-                <ContentFrame label={pageLabels[activePage] || 'Content'} />
+                <ContentFrame />
               </div>
             )}
           </main>
