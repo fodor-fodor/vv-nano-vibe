@@ -165,6 +165,7 @@ function Header({ activePage, onNavigate }: { activePage: string; onNavigate: (i
   const pageLabels: Record<string, string> = {
     search: 'SEARCH',
     notifications: 'NOTIFICATIONS',
+    account: 'ACCOUNT',
     home: 'HOME',
     vehicles: 'VEHICLES',
     messages: 'MESSAGES',
@@ -205,8 +206,8 @@ function Header({ activePage, onNavigate }: { activePage: string; onNavigate: (i
         <div className="h-6 w-px bg-gray-800 mx-1" />
 
         {/* Avatar */}
-        <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#30BAFF]/20 to-blue-600/20 p-px">
+        <button onClick={() => onNavigate('account')} className="flex items-center gap-2 hover:opacity-80 transition-opacity press-scale">
+          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br from-[#30BAFF]/20 to-blue-600/20 p-px ${activePage === 'account' ? 'shadow-[0_0_12px_rgba(48,186,255,0.3)]' : ''}`}>
             <div className="w-full h-full rounded-[7px] bg-[#0a1124] flex items-center justify-center">
               <span className="font-display text-[10px] font-bold text-[#30BAFF]">AF</span>
             </div>
@@ -873,6 +874,552 @@ function NotificationsView() {
   )
 }
 
+// ─── Account / User Settings ──────────────────────────────
+type AccountTab = 'profile' | 'sign-in' | 'two-factor' | 'billing' | 'usage'
+
+const accountTabs: { id: AccountTab; label: string; icon: React.ReactNode }[] = [
+  { id: 'profile', label: 'Profile', icon: (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+    </svg>
+  )},
+  { id: 'sign-in', label: 'Sign-in Methods', icon: (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+    </svg>
+  )},
+  { id: 'two-factor', label: 'Two-Factor Auth', icon: (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+  )},
+  { id: 'billing', label: 'Billing', icon: (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+    </svg>
+  )},
+  { id: 'usage', label: 'Usage', icon: (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    </svg>
+  )},
+]
+
+const keyboardShortcuts = [
+  { keys: ['⌘', 'K'], action: 'Quick search' },
+  { keys: ['⌘', '/'], action: 'Command palette' },
+  { keys: ['⌘', 'B'], action: 'Toggle sidebar' },
+  { keys: ['⌘', 'N'], action: 'New portal' },
+  { keys: ['⌘', '.'], action: 'Settings' },
+  { keys: ['Esc'], action: 'Close panel / Cancel' },
+]
+
+const billingHistory = [
+  { date: 'Feb 1, 2026', description: 'Pro Plan — Monthly', amount: '$49.00', status: 'Paid' },
+  { date: 'Jan 1, 2026', description: 'Pro Plan — Monthly', amount: '$49.00', status: 'Paid' },
+  { date: 'Dec 1, 2025', description: 'Pro Plan — Monthly', amount: '$49.00', status: 'Paid' },
+  { date: 'Nov 1, 2025', description: 'Pro Plan — Monthly', amount: '$49.00', status: 'Paid' },
+  { date: 'Oct 15, 2025', description: 'Token overage — 12,400 tokens', amount: '$4.80', status: 'Paid' },
+  { date: 'Oct 1, 2025', description: 'Pro Plan — Monthly', amount: '$49.00', status: 'Paid' },
+]
+
+const weeklyUsage = [
+  { label: 'Mon', value: 3200 },
+  { label: 'Tue', value: 4800 },
+  { label: 'Wed', value: 6100 },
+  { label: 'Thu', value: 5400 },
+  { label: 'Fri', value: 7200 },
+  { label: 'Sat', value: 1800 },
+  { label: 'Sun', value: 900 },
+]
+
+const monthlyUsage = [
+  { label: 'Sep', value: 82000 },
+  { label: 'Oct', value: 124000 },
+  { label: 'Nov', value: 98000 },
+  { label: 'Dec', value: 110000 },
+  { label: 'Jan', value: 134000 },
+  { label: 'Feb', value: 45000 },
+]
+
+function AccountView({ onLogout }: { onLogout: () => void }) {
+  const [activeTab, setActiveTab] = useState<AccountTab>('profile')
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+
+  return (
+    <div className="flex-1 flex overflow-hidden">
+      {/* Secondary sidebar */}
+      <div className="w-[200px] flex-shrink-0 border-r border-white/[0.06] flex flex-col animate-fade-in-up">
+        {/* User card */}
+        <div className="p-5 pb-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#30BAFF]/20 to-blue-600/20 p-px flex-shrink-0">
+              <div className="w-full h-full rounded-[11px] bg-[#0a1124] flex items-center justify-center">
+                <span className="font-display text-xs font-bold text-[#30BAFF]">AF</span>
+              </div>
+            </div>
+            <div className="min-w-0">
+              <p className="font-tech text-sm text-white/80 font-medium tracking-wide truncate">Andrew Fodor</p>
+              <p className="font-mono text-[9px] text-gray-600 tracking-wider truncate">Virtual Vehicle</p>
+            </div>
+          </div>
+          <div className="h-px bg-white/[0.06]" />
+        </div>
+
+        {/* Tab nav */}
+        <nav className="flex-1 flex flex-col gap-0.5 px-3">
+          {accountTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all duration-200 ${
+                activeTab === tab.id
+                  ? 'bg-[#30BAFF]/10 text-[#30BAFF] text-glow-sm'
+                  : 'text-gray-500 hover:bg-[#30BAFF]/5 hover:text-gray-400'
+              }`}
+            >
+              {tab.icon}
+              <span className="font-tech text-[13px] font-medium tracking-wide">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* Log out at bottom */}
+        <div className="p-3 border-t border-white/[0.06]">
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-red-500/5 hover:text-red-400 transition-all w-full press-scale"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+            <span className="font-tech text-[13px] font-medium tracking-wide">Log Out</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Content area */}
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-[640px]">
+
+          {/* ── Profile Tab ── */}
+          {activeTab === 'profile' && (
+            <div className="animate-fade-in-up">
+              <h2 className="font-display text-lg font-semibold tracking-wider text-white/90 mb-1">Profile</h2>
+              <p className="font-tech text-xs text-gray-600 tracking-wide mb-6">Manage your account information and preferences</p>
+
+              {/* Avatar + name */}
+              <div className="flex items-center gap-4 mb-8 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-fade-in-up stagger-1">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#30BAFF]/20 to-blue-600/20 p-px flex-shrink-0">
+                  <div className="w-full h-full rounded-[15px] bg-[#0a1124] flex items-center justify-center">
+                    <span className="font-display text-xl font-bold text-[#30BAFF]">AF</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-tech text-lg text-white/90 font-semibold tracking-wide">Andrew Fodor</h3>
+                  <p className="font-tech text-sm text-gray-500 tracking-wide">Virtual Vehicle</p>
+                  <p className="font-mono text-[10px] text-gray-700 tracking-wider mt-1">Account created Oct 15, 2025</p>
+                </div>
+                <button className="ml-auto px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:border-[#30BAFF]/20 hover:text-[#30BAFF] transition-all press-scale tracking-wider">
+                  Edit
+                </button>
+              </div>
+
+              {/* Email */}
+              <div className="mb-8">
+                <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-2">Email Address</label>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-fade-in-up stagger-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                  <span className="font-tech text-sm text-white/70 tracking-wide flex-1">afodor@virtualvehicle.com</span>
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                    <span className="font-mono text-[9px] text-emerald-500 tracking-wider uppercase font-semibold">Verified</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Theme preferences */}
+              <div className="mb-8">
+                <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-2">Theme</label>
+                <div className="flex gap-3 animate-fade-in-up stagger-3">
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={`flex-1 flex items-center gap-3 p-3 rounded-xl border transition-all press-scale ${
+                      theme === 'dark'
+                        ? 'bg-[#30BAFF]/10 border-[#30BAFF]/30 text-[#30BAFF]'
+                        : 'bg-white/[0.02] border-white/[0.06] text-gray-500 hover:border-white/[0.12]'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                    </svg>
+                    <span className="font-tech text-sm font-medium tracking-wide">Dark</span>
+                    {theme === 'dark' && <div className="ml-auto w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)]" />}
+                  </button>
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={`flex-1 flex items-center gap-3 p-3 rounded-xl border transition-all press-scale ${
+                      theme === 'light'
+                        ? 'bg-[#30BAFF]/10 border-[#30BAFF]/30 text-[#30BAFF]'
+                        : 'bg-white/[0.02] border-white/[0.06] text-gray-500 hover:border-white/[0.12]'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    </svg>
+                    <span className="font-tech text-sm font-medium tracking-wide">Light</span>
+                    {theme === 'light' && <div className="ml-auto w-2 h-2 rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.5)]" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Keyboard shortcuts */}
+              <div className="mb-8">
+                <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-2">Keyboard Shortcuts</label>
+                <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] divide-y divide-white/[0.04] overflow-hidden animate-fade-in-up stagger-4">
+                  {keyboardShortcuts.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                      <span className="font-tech text-xs text-gray-400 tracking-wide">{s.action}</span>
+                      <div className="flex items-center gap-1">
+                        {s.keys.map((k, j) => (
+                          <span key={j}>
+                            <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] font-mono text-[10px] text-gray-400">{k}</kbd>
+                            {j < s.keys.length - 1 && <span className="text-gray-700 text-[10px] mx-0.5">+</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Danger zone */}
+              <div className="pt-6 border-t border-white/[0.06]">
+                <label className="font-mono text-[10px] text-red-500/60 tracking-wider uppercase block mb-2">Danger Zone</label>
+                <div className="p-4 rounded-xl bg-red-500/[0.03] border border-red-500/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-tech text-sm text-red-400/80 font-medium tracking-wide">Delete Account</p>
+                      <p className="font-mono text-[10px] text-gray-600 mt-0.5">Permanently remove your account and all data. This cannot be undone.</p>
+                    </div>
+                    <button className="px-4 py-2 rounded-lg border border-red-500/20 text-red-500 text-xs font-tech font-semibold tracking-wider hover:bg-red-500/10 hover:border-red-500/30 transition-all press-scale">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Sign-in Methods Tab ── */}
+          {activeTab === 'sign-in' && (
+            <div className="animate-fade-in-up">
+              <h2 className="font-display text-lg font-semibold tracking-wider text-white/90 mb-1">Sign-in Methods</h2>
+              <p className="font-tech text-xs text-gray-600 tracking-wide mb-6">Manage how you sign in to your account</p>
+
+              <div className="flex flex-col gap-3">
+                {/* Email */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 animate-fade-in-up stagger-1 hover-lift">
+                  <div className="w-10 h-10 rounded-xl bg-[#30BAFF]/10 flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#30BAFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/80 font-medium tracking-wide">Email & Password</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">afodor@virtualvehicle.com</p>
+                  </div>
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="font-mono text-[9px] text-emerald-500 tracking-wider uppercase font-semibold">Connected</span>
+                  </span>
+                </div>
+
+                {/* Google */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 animate-fade-in-up stagger-2 hover-lift">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/80 font-medium tracking-wide">Google</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">Sign in with your Google account</p>
+                  </div>
+                  <button className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:border-[#30BAFF]/20 hover:text-[#30BAFF] transition-all press-scale tracking-wider">
+                    Connect
+                  </button>
+                </div>
+
+                {/* Passkeys */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 animate-fade-in-up stagger-3 hover-lift">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.864 4.243A7.5 7.5 0 0119.5 10.5c0 2.92-.556 5.709-1.568 8.268M5.742 6.364A7.465 7.465 0 004.5 10.5a7.464 7.464 0 01-1.15 3.993m1.989 3.559A11.209 11.209 0 008.25 10.5a3.75 3.75 0 117.5 0c0 .527-.021 1.049-.064 1.565M12 10.5a14.94 14.94 0 01-3.6 9.75m6.633-4.596a18.666 18.666 0 01-2.485 5.33" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/80 font-medium tracking-wide">Passkeys</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">Biometric or hardware key authentication</p>
+                  </div>
+                  <button className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:border-[#30BAFF]/20 hover:text-[#30BAFF] transition-all press-scale tracking-wider">
+                    Set Up
+                  </button>
+                </div>
+
+                {/* GitHub */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 animate-fade-in-up stagger-4 hover-lift">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/80 font-medium tracking-wide">GitHub</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">Sign in with your GitHub account</p>
+                  </div>
+                  <button className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:border-[#30BAFF]/20 hover:text-[#30BAFF] transition-all press-scale tracking-wider">
+                    Connect
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Two-Factor Auth Tab ── */}
+          {activeTab === 'two-factor' && (
+            <div className="animate-fade-in-up">
+              <h2 className="font-display text-lg font-semibold tracking-wider text-white/90 mb-1">Two-Factor Authentication</h2>
+              <p className="font-tech text-xs text-gray-600 tracking-wide mb-6">Add an extra layer of security to your account</p>
+
+              {/* Status */}
+              <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] mb-6 animate-fade-in-up stagger-1">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-tech text-sm text-white/80 font-semibold tracking-wide">2FA is not enabled</p>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 font-mono text-[9px] text-amber-500 tracking-wider uppercase font-semibold">Recommended</span>
+                    </div>
+                    <p className="font-mono text-[10px] text-gray-600 leading-relaxed">
+                      Two-factor authentication adds a second verification step when signing in. We strongly recommend enabling it.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Methods */}
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-3">Available Methods</label>
+
+              <div className="flex flex-col gap-3">
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 hover-lift animate-fade-in-up stagger-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#30BAFF]/10 flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#30BAFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/80 font-medium tracking-wide">Authenticator App</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">Use Google Authenticator, Authy, or 1Password</p>
+                  </div>
+                  <button className="px-4 py-2 rounded-lg bg-[#30BAFF]/10 border border-[#30BAFF]/25 text-[#30BAFF] text-xs font-tech font-semibold tracking-wider hover:bg-[#30BAFF]/20 hover:border-[#30BAFF]/40 transition-all press-scale">
+                    Enable
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 hover-lift animate-fade-in-up stagger-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/80 font-medium tracking-wide">SMS Verification</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">Receive a code via text message</p>
+                  </div>
+                  <button className="px-4 py-2 rounded-lg border border-white/[0.08] text-xs font-tech text-gray-500 hover:border-[#30BAFF]/20 hover:text-[#30BAFF] transition-all press-scale tracking-wider">
+                    Enable
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 hover-lift animate-fade-in-up stagger-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/80 font-medium tracking-wide">Recovery Codes</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">Generate backup codes for account recovery</p>
+                  </div>
+                  <button className="px-4 py-2 rounded-lg border border-white/[0.08] text-xs font-tech text-gray-500 hover:border-[#30BAFF]/20 hover:text-[#30BAFF] transition-all press-scale tracking-wider">
+                    Generate
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Billing Tab ── */}
+          {activeTab === 'billing' && (
+            <div className="animate-fade-in-up">
+              <h2 className="font-display text-lg font-semibold tracking-wider text-white/90 mb-1">Billing</h2>
+              <p className="font-tech text-xs text-gray-600 tracking-wide mb-6">Manage your subscription and payment methods</p>
+
+              {/* Current plan */}
+              <div className="p-5 rounded-xl bg-gradient-to-br from-[#30BAFF]/[0.06] to-blue-600/[0.03] border border-[#30BAFF]/15 mb-6 animate-fade-in-up stagger-1">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-display text-sm font-bold text-[#30BAFF] tracking-wider">PRO PLAN</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#30BAFF]/15 border border-[#30BAFF]/25 font-mono text-[9px] text-[#30BAFF] tracking-wider uppercase font-semibold">Active</span>
+                    </div>
+                    <p className="font-mono text-[10px] text-gray-600">Billed monthly · Next invoice Feb 1, 2026</p>
+                  </div>
+                  <span className="font-display text-2xl text-white/90">$49<span className="text-sm text-gray-600">/mo</span></span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1.5 rounded-lg border border-[#30BAFF]/20 text-[11px] font-tech text-[#30BAFF] hover:bg-[#30BAFF]/10 transition-all press-scale tracking-wider">
+                    Change Plan
+                  </button>
+                  <button className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:border-red-500/20 hover:text-red-400 transition-all press-scale tracking-wider">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+
+              {/* Payment method */}
+              <div className="mb-6">
+                <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-2">Payment Method</label>
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-4 animate-fade-in-up stagger-2">
+                  <div className="w-12 h-8 rounded-md bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center">
+                    <span className="font-mono text-[9px] text-white font-bold tracking-wider">VISA</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-tech text-sm text-white/70 tracking-wide">•••• •••• •••• 4242</p>
+                    <p className="font-mono text-[10px] text-gray-600 mt-0.5">Expires 08/2028</p>
+                  </div>
+                  <button className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-[11px] font-tech text-gray-500 hover:border-[#30BAFF]/20 hover:text-[#30BAFF] transition-all press-scale tracking-wider">
+                    Update
+                  </button>
+                </div>
+              </div>
+
+              {/* Billing history */}
+              <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-2">Billing History</label>
+              <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-hidden animate-fade-in-up stagger-3">
+                <div className="grid grid-cols-[1fr_2fr_auto_auto] gap-x-4 px-4 py-2 border-b border-white/[0.06]">
+                  <span className="font-mono text-[9px] text-gray-700 tracking-wider uppercase">Date</span>
+                  <span className="font-mono text-[9px] text-gray-700 tracking-wider uppercase">Description</span>
+                  <span className="font-mono text-[9px] text-gray-700 tracking-wider uppercase">Amount</span>
+                  <span className="font-mono text-[9px] text-gray-700 tracking-wider uppercase">Status</span>
+                </div>
+                {billingHistory.map((item, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_2fr_auto_auto] gap-x-4 px-4 py-2.5 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.01] transition-colors">
+                    <span className="font-mono text-[11px] text-gray-500">{item.date}</span>
+                    <span className="font-tech text-xs text-gray-400 tracking-wide">{item.description}</span>
+                    <span className="font-mono text-[11px] text-white/70">{item.amount}</span>
+                    <span className="font-mono text-[10px] text-emerald-500 tracking-wider">{item.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Usage Tab ── */}
+          {activeTab === 'usage' && (
+            <div className="animate-fade-in-up">
+              <h2 className="font-display text-lg font-semibold tracking-wider text-white/90 mb-1">Usage</h2>
+              <p className="font-tech text-xs text-gray-600 tracking-wide mb-6">Token consumption and API usage metrics</p>
+
+              {/* Current period stats */}
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-fade-in-up stagger-1">
+                  <span className="font-mono text-[9px] text-gray-600 tracking-wider uppercase block mb-1">This Week</span>
+                  <span className="font-display text-xl text-white/90">29.4K</span>
+                  <span className="font-mono text-[9px] text-gray-600 block mt-0.5">tokens</span>
+                </div>
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-fade-in-up stagger-2">
+                  <span className="font-mono text-[9px] text-gray-600 tracking-wider uppercase block mb-1">This Month</span>
+                  <span className="font-display text-xl text-white/90">45.0K</span>
+                  <span className="font-mono text-[9px] text-gray-600 block mt-0.5">tokens</span>
+                </div>
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-fade-in-up stagger-3">
+                  <span className="font-mono text-[9px] text-gray-600 tracking-wider uppercase block mb-1">Plan Limit</span>
+                  <span className="font-display text-xl text-[#30BAFF]">100K</span>
+                  <span className="font-mono text-[9px] text-gray-600 block mt-0.5">tokens / mo</span>
+                </div>
+              </div>
+
+              {/* Usage bar */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] mb-6 animate-fade-in-up stagger-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase">Monthly Usage</span>
+                  <span className="font-mono text-[10px] text-gray-500">45,000 / 100,000</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-[#30BAFF] to-blue-500 shadow-[0_0_10px_rgba(48,186,255,0.3)]" style={{ width: '45%' }} />
+                </div>
+                <p className="font-mono text-[9px] text-gray-700 mt-1.5">55,000 tokens remaining this billing cycle</p>
+              </div>
+
+              {/* Weekly chart */}
+              <div className="mb-6">
+                <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-3">This Week</label>
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-fade-in-up stagger-5">
+                  <div className="flex items-end gap-2 h-32">
+                    {weeklyUsage.map((d, i) => {
+                      const maxVal = Math.max(...weeklyUsage.map(w => w.value))
+                      const pct = (d.value / maxVal) * 100
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                          <span className="font-mono text-[8px] text-gray-600">{(d.value / 1000).toFixed(1)}K</span>
+                          <div className="w-full rounded-t-md bg-gradient-to-t from-[#30BAFF]/30 to-[#30BAFF]/60 transition-all duration-500" style={{ height: `${pct}%` }} />
+                          <span className="font-mono text-[9px] text-gray-600">{d.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Monthly chart */}
+              <div>
+                <label className="font-mono text-[10px] text-gray-600 tracking-wider uppercase block mb-3">Monthly Trend</label>
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-fade-in-up stagger-6">
+                  <div className="flex items-end gap-3 h-32">
+                    {monthlyUsage.map((d, i) => {
+                      const maxVal = Math.max(...monthlyUsage.map(m => m.value))
+                      const pct = (d.value / maxVal) * 100
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                          <span className="font-mono text-[8px] text-gray-600">{(d.value / 1000).toFixed(0)}K</span>
+                          <div className="w-full rounded-t-md bg-gradient-to-t from-blue-600/30 to-[#30BAFF]/50 transition-all duration-500" style={{ height: `${pct}%` }} />
+                          <span className="font-mono text-[9px] text-gray-600">{d.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Password Gate ─────────────────────────────────────────
 function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState('')
@@ -960,6 +1507,8 @@ export default function App() {
               <SearchView />
             ) : activePage === 'notifications' ? (
               <NotificationsView />
+            ) : activePage === 'account' ? (
+              <AccountView onLogout={() => { sessionStorage.removeItem('vv-auth'); setAuthed(false) }} />
             ) : (
               <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
                 <BrowserControls />
