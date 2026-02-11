@@ -112,26 +112,27 @@ App
 ## Data Flow
 
 ```
-                    ┌──────────────┐
-                    │     App      │
-                    │              │
-                    │ portals[]    │──────────┬──────────────────┐
-                    │ pinnedPages[]│────┐     │                  │
-                    │ activePage   │    │     │                  │
-                    │ showModal    │    │     │                  │
-                    └──────┬───────┘    │     │                  │
-                           │            │     │                  │
-              ┌────────────┼────────────┼─────┼──────────┐       │
-              │            │            │     │          │       │
-              ▼            ▼            ▼     ▼          ▼       ▼
-         ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-         │ Sidebar  │ │ Header  │ │ContentFr.│ │ Settings │ │PortalMdl │
-         │          │ │         │ │          │ │          │ │          │
-         │pinned[]  │ │pinned[] │ │portals[] │ │portals[] │ │onAdd(p)  │
-         │onRemove()│ │         │ │onAdd()   │ │onAdd()   │ │onClose() │
-         └─────────┘ └─────────┘ │onRemove()│ │onRemove()│ └──────────┘
-                                  │onEdit()  │ │onEdit()  │
-                                  └──────────┘ └──────────┘
+                    ┌──────────────────────┐
+                    │         App          │
+                    │                      │
+                    │ portals[]        ────┼──→ localStorage('vv-portals')
+                    │ pinnedPages[]    ────┼──→ localStorage('vv-pinned-pages')
+                    │ notifications[]  ────┼──→ localStorage('vv-notifications')
+                    │ themeMode        ────┼──→ localStorage('vv-theme')
+                    │ activePage           │       + <html data-theme>
+                    │ showModal            │
+                    └──────┬───────────────┘
+                           │
+       ┌───────────┬───────┼────────┬────────────┬────────────┐
+       │           │       │        │            │            │
+       ▼           ▼       ▼        ▼            ▼            ▼
+  ┌─────────┐ ┌────────┐ ┌────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐
+  │ Sidebar  │ │ Header │ │Content │ │ Settings │ │ Notifs   │ │ Portal │
+  │          │ │        │ │ Frame  │ │          │ │ View     │ │ Modal  │
+  │pinned[]  │ │unread  │ │        │ │portals[] │ │notifs[]  │ │        │
+  │onRemove()│ │Count   │ │portals │ │theme     │ │onToggle()│ │onAdd() │
+  └─────────┘ └────────┘ └────────┘ │onSetTheme│ │onMarkAll │ └────────┘
+                                     └──────────┘ └──────────┘
 ```
 
 ## Routing Table
@@ -163,11 +164,27 @@ animate-pill-pop            stagger-1..stagger-8     animate-orb-ring
 animate-glow-in             (0.04s increments)       animate-orb-core
 ```
 
+## Persistence Layer
+
+```
+localStorage
+├── vv-theme          → ThemeMode ('dark' | 'light' | 'system')
+├── vv-portals        → Portal[] JSON
+├── vv-pinned-pages   → PinnedPageData[] JSON (no JSX icons)
+└── vv-notifications  → {id: number, read: boolean}[] JSON
+
+sessionStorage
+├── vv-auth           → '1' (password gate)
+
+localStorage (one-time)
+└── vv-onboarding-completed → '1' (skip welcome modal)
+```
+
 ## File Size Reference
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/App.tsx` | ~2074 | All components, types, mock data |
-| `src/index.css` | ~231 | Tailwind + 20 keyframe animations + utilities |
+| `src/App.tsx` | ~2700 | All components, types, mock data, hooks |
+| `src/index.css` | ~281 | Tailwind + 20+ keyframe animations + light theme overrides |
 | `src/main.tsx` | ~8 | React DOM mount |
 | `public/vv-logo.svg` | ~53 | 17-path composed wordmark |

@@ -242,3 +242,39 @@ body {
   0%, 100% { box-shadow: 0 0 0 4px rgba(48,186,255,0.2), 0 0 20px rgba(48,186,255,0.3); }
   50% { box-shadow: 0 0 0 8px rgba(48,186,255,0), 0 0 30px rgba(48,186,255,0.5); }
 }
+
+/* ─── Light Theme Overrides ──────────────────────────────── */
+[data-theme="light"] body {
+  background-color: #e8ecf0;
+}
+
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(48, 186, 255, 0.15);
+}
+
+[data-theme="light"] .glass-subtle {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(48, 186, 255, 0.1);
+}
+
+[data-theme="light"] .text-glow {
+  text-shadow: 0 0 20px rgba(48, 186, 255, 0.3);
+}
+
+[data-theme="light"] .text-glow-sm {
+  text-shadow: 0 0 10px rgba(48, 186, 255, 0.2);
+}
+
+[data-theme="light"] .iframe-container {
+  background: radial-gradient(ellipse at center, #f0f4f8 0%, #e2e8f0 100%);
+}
+
+[data-theme="light"] ::selection {
+  background: #30BAFF;
+  color: #fff;
+}

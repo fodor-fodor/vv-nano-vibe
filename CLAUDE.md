@@ -22,7 +22,7 @@ VV Nano is a **React + Vite + Tailwind v4** standalone frontend prototype for a 
 - Custom classes are defined in `src/index.css` (glass, glow, animations)
 
 ### Architecture: Single-File Components
-Everything is in `src/App.tsx` (~2074 lines). This is intentional for rapid iteration. Components:
+Everything is in `src/App.tsx` (~2700 lines). This is intentional for rapid iteration. Components:
 
 ```
 App (root)
@@ -43,15 +43,27 @@ App (root)
 ### State Architecture
 - **Portal state** lives in `App` → shared between `ContentFrame` and `SettingsView`
 - **Pinned pages** are separate from portals — they represent sidebar URL shortcuts
+- **Notifications** state lifted to `App` — enables dynamic header badge count
+- **Theme** managed by `useTheme()` hook at App level — syncs to DOM + localStorage
 - **No external state library** — all `useState` at component level or lifted to `App`
 - Portals start empty (empty state) — user adds them via modal
+
+### Persistence (localStorage)
+| Key | Type | Purpose |
+|-----|------|---------|
+| `vv-theme` | `ThemeMode` | Theme preference (dark/light/system) |
+| `vv-portals` | `Portal[]` | Connected portals |
+| `vv-pinned-pages` | `PinnedPageData[]` | Sidebar shortcuts (no JSX — icons hydrated on load) |
+| `vv-notifications` | `{id, read}[]` | Notification read state |
+| `vv-onboarding-completed` | `'1'` | Skip welcome modal |
 
 ### Key Types
 ```typescript
 interface Portal { id: string; name: string; url: string; color: string }
-interface PinnedPage { id: string; label: string; url: string; icon: React.ReactNode }
-type AccountTab = 'profile' | 'sign-in' | 'two-factor' | 'billing' | 'usage'
+interface PinnedPage { id: string; label: string; url: string; icon: React.ReactNode; group?: string }
+interface PinnedPageData { id: string; label: string; url: string; group?: string }  // serializable
 type ThemeMode = 'dark' | 'light' | 'system'
+type AccountTab = 'profile' | 'sign-in' | 'two-factor' | 'billing' | 'usage'
 type NotifFilter = 'all' | 'unread' | 'critical' | 'alert' | 'warning' | 'info'
 ```
 
@@ -87,7 +99,8 @@ No router library — simple `activePage` string state in `App`:
 - SVG icons are inline (no icon library)
 - Mock data is hardcoded as `const` arrays above their consuming components
 - Animations use CSS keyframes in `index.css`, applied via utility classes
-- No `useEffect` except for click-outside handlers and dropdown dismiss
+- `useEffect` for: click-outside handlers, dropdown dismiss, localStorage persistence, theme sync
+- `useCallback` for notification handlers passed as props
 
 ## What NOT to Do
 - Don't split `App.tsx` into multiple files (yet) — this is a vibing prototype

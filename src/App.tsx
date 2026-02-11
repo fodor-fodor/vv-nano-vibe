@@ -1,4 +1,35 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+
+// ─── Theme ────────────────────────────────────────────────
+type ThemeMode = 'dark' | 'light' | 'system'
+
+function useTheme() {
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() =>
+    (localStorage.getItem('vv-theme') as ThemeMode) || 'dark'
+  )
+  const [systemPref, setSystemPref] = useState<'dark' | 'light'>(() =>
+    window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  )
+
+  // Listen for OS preference changes
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: light)')
+    const handler = (e: MediaQueryListEvent) => setSystemPref(e.matches ? 'light' : 'dark')
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  // Persist + apply
+  useEffect(() => {
+    localStorage.setItem('vv-theme', themeMode)
+    const effective = themeMode === 'system' ? systemPref : themeMode
+    document.documentElement.setAttribute('data-theme', effective)
+  }, [themeMode, systemPref])
+
+  const effectiveTheme = themeMode === 'system' ? systemPref : themeMode
+
+  return { themeMode, setThemeMode, effectiveTheme }
+}
 
 // ─── Logo ───────────────────────────────────────────────────
 const VVLogo = () => (
@@ -48,6 +79,30 @@ interface PinnedPage {
   url: string
   icon: React.ReactNode
   group?: string
+}
+
+interface PinnedPageData {
+  id: string
+  label: string
+  url: string
+  group?: string
+}
+
+const globeIcon = (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+  </svg>
+)
+
+function hydratePinnedPages(data: PinnedPageData[]): PinnedPage[] {
+  return data.map(d => {
+    const defaultPage = defaultPinnedPages.find(dp => dp.id === d.id)
+    return { ...d, icon: defaultPage?.icon || globeIcon }
+  })
+}
+
+function dehydratePinnedPages(pages: PinnedPage[]): PinnedPageData[] {
+  return pages.map(({ id, label, url, group }) => ({ id, label, url, ...(group ? { group } : {}) }))
 }
 
 const defaultPinnedPages: PinnedPage[] = [
@@ -364,7 +419,7 @@ function Sidebar({ isCollapsed, activePage, onToggle, onNavigate, pinnedPages, o
 }
 
 // ─── Header ─────────────────────────────────────────────────
-function Header({ activePage, onNavigate, pinnedPages }: { activePage: string; onNavigate: (id: string) => void; pinnedPages: PinnedPage[] }) {
+function Header({ activePage, onNavigate, pinnedPages, unreadCount }: { activePage: string; onNavigate: (id: string) => void; pinnedPages: PinnedPage[]; unreadCount: number }) {
   const systemLabels: Record<string, string> = {
     search: 'SEARCH',
     notifications: 'NOTIFICATIONS',
@@ -400,7 +455,11 @@ function Header({ activePage, onNavigate, pinnedPages }: { activePage: string; o
           <svg xmlns="http://www.w3.org/2000/svg" className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
           </svg>
-          {activePage !== 'notifications' && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#30BAFF] rounded-full shadow-[0_0_6px_rgba(48,186,255,0.6)]" />}
+          {activePage !== 'notifications' && unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-[#30BAFF] shadow-[0_0_8px_rgba(48,186,255,0.6)] text-[8px] font-mono font-bold text-black px-1">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
 
         <div className="h-6 w-px bg-gray-800 mx-1" />
@@ -419,7 +478,13 @@ function Header({ activePage, onNavigate, pinnedPages }: { activePage: string; o
 }
 
 // ─── Browser Controls ───────────────────────────────────────
-function BrowserControls() {
+function BrowserControls({ url }: { url?: string }) {
+  const displayUrl = (() => {
+    if (!url) return 'vvnano.com/home'
+    try { const u = new URL(url); return u.hostname + u.pathname.replace(/\/$/, '') }
+    catch { return url }
+  })()
+
   return (
     <div className="flex items-center justify-between mb-3 px-1">
       <div className="flex items-center gap-2">
@@ -434,18 +499,23 @@ function BrowserControls() {
           </svg>
         </button>
         <div className="h-4 w-px bg-gray-800 mx-1" />
-        <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-[#30BAFF]/[0.03] border border-[#30BAFF]/[0.06]">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#30BAFF]/60" />
-          <span className="font-mono text-[11px] text-gray-500 select-none tracking-wide">portal.vvnano.com/dashboard</span>
+        <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-[#30BAFF]/[0.03] border border-[#30BAFF]/[0.06] max-w-[400px]">
+          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${url ? 'bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]' : 'bg-[#30BAFF]/60'}`} />
+          <span className="font-mono text-[11px] text-gray-500 select-none tracking-wide truncate">{displayUrl}</span>
         </div>
       </div>
 
-      <button className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] font-tech font-medium text-gray-500 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 transition-all tracking-wider uppercase">
-        <span>External</span>
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-        </svg>
-      </button>
+      {url && (
+        <button
+          onClick={() => window.open(url, '_blank')}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] font-tech font-medium text-gray-500 hover:text-[#30BAFF] hover:bg-[#30BAFF]/5 transition-all tracking-wider uppercase"
+        >
+          <span>External</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
@@ -845,18 +915,80 @@ function ContentFrame({ portals, onAddPortal }: { portals: Portal[]; onAddPortal
                         </div>
                       </div>
 
-                      {/* Fake page content lines */}
+                      {/* Fake page content — varied by index */}
                       <div className="absolute top-10 left-4 right-4 flex flex-col gap-2">
-                        <div className="h-2 rounded-full w-3/4" style={{ backgroundColor: `${p.color}15` }} />
-                        <div className="h-1.5 rounded-full w-full bg-white/[0.03]" />
-                        <div className="h-1.5 rounded-full w-5/6 bg-white/[0.03]" />
-                        <div className="h-1.5 rounded-full w-2/3 bg-white/[0.02]" />
-                        <div className="mt-2 flex gap-2">
-                          <div className="h-8 w-16 rounded" style={{ backgroundColor: `${p.color}10` }} />
-                          <div className="h-8 w-16 rounded bg-white/[0.02]" />
-                        </div>
-                        <div className="h-1.5 rounded-full w-full bg-white/[0.02]" />
-                        <div className="h-1.5 rounded-full w-4/5 bg-white/[0.02]" />
+                        {i % 4 === 0 && (
+                          /* Dashboard layout: metric cards + chart */
+                          <>
+                            <div className="flex gap-2">
+                              {[0,1,2].map(k => (
+                                <div key={k} className="flex-1 h-7 rounded" style={{ backgroundColor: `${p.color}${k === 0 ? '12' : '08'}` }}>
+                                  <div className="h-1.5 w-2/3 rounded-full mt-1.5 ml-1.5" style={{ backgroundColor: `${p.color}20` }} />
+                                  <div className="h-1 w-1/2 rounded-full mt-1 ml-1.5 bg-white/[0.03]" />
+                                </div>
+                              ))}
+                            </div>
+                            <div className="h-14 rounded flex items-end gap-px px-2 pb-1" style={{ backgroundColor: `${p.color}06` }}>
+                              {[40,65,45,80,55,70,90,60,75,50,85,65].map((h, k) => (
+                                <div key={k} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, backgroundColor: `${p.color}${k % 3 === 0 ? '20' : '12'}` }} />
+                              ))}
+                            </div>
+                          </>
+                        )}
+                        {i % 4 === 1 && (
+                          /* Table layout: header row + data rows */
+                          <>
+                            <div className="h-2 rounded-full w-1/3" style={{ backgroundColor: `${p.color}18` }} />
+                            <div className="rounded overflow-hidden border border-white/[0.04]">
+                              <div className="h-4 flex gap-px" style={{ backgroundColor: `${p.color}10` }}>
+                                {[1,1,1,1].map((_,k) => <div key={k} className="flex-1 h-full" style={{ backgroundColor: `${p.color}08` }} />)}
+                              </div>
+                              {[0,1,2,3].map(r => (
+                                <div key={r} className={`h-4 flex gap-px ${r % 2 === 0 ? 'bg-white/[0.01]' : 'bg-white/[0.02]'}`}>
+                                  {[1,1,1,1].map((_,k) => <div key={k} className="flex-1" />)}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                        {i % 4 === 2 && (
+                          /* Map layout: sidebar + map area */
+                          <>
+                            <div className="flex gap-2 h-20">
+                              <div className="w-1/3 rounded flex flex-col gap-1.5 p-1.5" style={{ backgroundColor: `${p.color}08` }}>
+                                {[0,1,2,3].map(k => (
+                                  <div key={k} className="h-2.5 rounded-sm flex items-center gap-1 px-1" style={{ backgroundColor: k === 0 ? `${p.color}15` : 'rgba(255,255,255,0.02)' }}>
+                                    <div className="w-1 h-1 rounded-full" style={{ backgroundColor: k === 0 ? p.color : 'rgba(255,255,255,0.1)' }} />
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex-1 rounded relative overflow-hidden" style={{ backgroundColor: `${p.color}05` }}>
+                                <div className="absolute inset-0 opacity-20" style={{ background: `radial-gradient(circle at 60% 40%, ${p.color}30, transparent 50%), radial-gradient(circle at 30% 70%, ${p.color}20, transparent 40%)` }} />
+                                {[{t:20,l:55},{t:45,l:25},{t:60,l:70}].map((dot,k) => (
+                                  <div key={k} className="absolute w-1.5 h-1.5 rounded-full" style={{ top: `${dot.t}%`, left: `${dot.l}%`, backgroundColor: p.color, boxShadow: `0 0 4px ${p.color}80` }} />
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        {i % 4 === 3 && (
+                          /* List layout: search bar + items */
+                          <>
+                            <div className="h-4 rounded flex items-center gap-1.5 px-2" style={{ backgroundColor: `${p.color}08` }}>
+                              <div className="w-2 h-2 rounded-full border" style={{ borderColor: `${p.color}30` }} />
+                              <div className="h-1 rounded-full w-1/3 bg-white/[0.05]" />
+                            </div>
+                            {[0,1,2,3].map(k => (
+                              <div key={k} className="flex items-center gap-2 py-0.5">
+                                <div className="w-5 h-5 rounded" style={{ backgroundColor: `${p.color}${k === 0 ? '15' : '08'}` }} />
+                                <div className="flex-1 flex flex-col gap-0.5">
+                                  <div className="h-1.5 rounded-full" style={{ width: `${70 - k * 10}%`, backgroundColor: `${p.color}${k === 0 ? '15' : '08'}` }} />
+                                  <div className="h-1 rounded-full w-full bg-white/[0.02]" />
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
 
                       {/* Hover overlay */}
@@ -997,6 +1129,13 @@ function SearchView() {
   const toggleFilter = (f: string) => {
     setActiveFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
   }
+
+  const filteredResults = mockResults.filter(r => {
+    const q = query.toLowerCase()
+    const matchesQuery = !q || r.title.toLowerCase().includes(q) || r.subtitle.toLowerCase().includes(q) || r.category.toLowerCase().includes(q)
+    const matchesFilter = activeFilters.length === 0 || activeFilters.some(f => r.category.toLowerCase() === f.toLowerCase() || r.title.toLowerCase().includes(f.toLowerCase()))
+    return matchesQuery && matchesFilter
+  })
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -1157,8 +1296,17 @@ function SearchView() {
         <div className="flex gap-4 h-full">
           {/* Left column — results cards */}
           <div className="flex-1 flex flex-col gap-3 min-w-0">
-            <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase mb-1 animate-fade-in-up">{mockResults.length} results for "{query}"</span>
-            {mockResults.map((r, i) => (
+            <span className="font-mono text-[10px] text-gray-600 tracking-wider uppercase mb-1 animate-fade-in-up">{filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''} for "{query}"</span>
+            {filteredResults.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 py-12 animate-fade-in-up">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <p className="font-tech text-sm text-gray-600 tracking-wide">No results found</p>
+                <p className="font-mono text-[10px] text-gray-700">Try a different search term or clear filters</p>
+              </div>
+            ) : null}
+            {filteredResults.map((r, i) => (
               <button
                 key={i}
                 className={`w-full text-left p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#30BAFF]/20 hover:bg-[#30BAFF]/[0.03] group hover-lift animate-fade-in-up stagger-${i + 1}`}
@@ -1237,20 +1385,18 @@ const notifTypeConfig = {
 type NotifFilter = 'all' | 'unread' | 'critical' | 'alert' | 'warning' | 'info'
 
 // ─── Notifications View ────────────────────────────────────
-function NotificationsView() {
-  const [notifications, setNotifications] = useState(initialNotifications)
+function NotificationsView({ notifications, onToggleRead, onMarkAllRead }: {
+  notifications: typeof initialNotifications
+  onToggleRead: (id: number) => void
+  onMarkAllRead: () => void
+}) {
   const [filter, setFilter] = useState<NotifFilter>('all')
 
   const unreadCount = notifications.filter(n => !n.read).length
   const criticalCount = notifications.filter(n => n.type === 'critical' && !n.read).length
 
-  const toggleRead = (id: number) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n))
-  }
-
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }
+  const toggleRead = onToggleRead
+  const markAllRead = onMarkAllRead
 
   const filtered = notifications.filter(n => {
     if (filter === 'unread') return !n.read
@@ -1959,15 +2105,15 @@ function AccountView({ onLogout }: { onLogout: () => void }) {
 }
 
 // ─── Settings View ────────────────────────────────────────
-type ThemeMode = 'dark' | 'light' | 'system'
-
-function SettingsView({ portals, onAddPortal, onRemovePortal, onEditPortal }: {
+function SettingsView({ portals, onAddPortal, onRemovePortal, onEditPortal, themeMode, onSetThemeMode }: {
   portals: Portal[]
   onAddPortal: () => void
   onRemovePortal: (id: string) => void
   onEditPortal: (id: string, name: string, url: string) => void
+  themeMode: ThemeMode
+  onSetThemeMode: (mode: ThemeMode) => void
 }) {
-  const [themeMode, setThemeMode] = useState<ThemeMode>('dark')
+  const setThemeMode = onSetThemeMode
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editUrl, setEditUrl] = useState('')
@@ -2459,15 +2605,52 @@ export default function App() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('vv-auth') === '1')
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [activePage, setActivePage] = useState('home')
-  const [portals, setPortals] = useState<Portal[]>([])
+  const { themeMode, setThemeMode, effectiveTheme } = useTheme()
+  const [portals, setPortals] = useState<Portal[]>(() => {
+    try { const d = localStorage.getItem('vv-portals'); return d ? JSON.parse(d) : [] }
+    catch { return [] }
+  })
   const [showPortalModal, setShowPortalModal] = useState(false)
-  const [pinnedPages, setPinnedPages] = useState<PinnedPage[]>(defaultPinnedPages)
+  const [pinnedPages, setPinnedPages] = useState<PinnedPage[]>(() => {
+    try {
+      const d = localStorage.getItem('vv-pinned-pages')
+      return d ? hydratePinnedPages(JSON.parse(d)) : defaultPinnedPages
+    } catch { return defaultPinnedPages }
+  })
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const d = localStorage.getItem('vv-notifications')
+      if (d) {
+        const saved = JSON.parse(d) as { id: number; read: boolean }[]
+        return initialNotifications.map(n => {
+          const s = saved.find(s => s.id === n.id)
+          return s ? { ...n, read: s.read } : n
+        })
+      }
+      return initialNotifications
+    } catch { return initialNotifications }
+  })
+  const unreadNotifCount = notifications.filter(n => !n.read).length
+
+  const toggleNotifRead = useCallback((id: number) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n))
+  }, [])
+
+  const markAllNotifsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }, [])
+
   const [showPinUrlModal, setShowPinUrlModal] = useState(false)
   const [showGroupModal, setShowGroupModal] = useState(false)
   const [showWelcomeModal, setShowWelcomeModal] = useState(() =>
     !localStorage.getItem('vv-onboarding-completed')
   )
   const [showTour, setShowTour] = useState(false)
+
+  // Persist portals, pinned pages, and notification read state
+  useEffect(() => { localStorage.setItem('vv-portals', JSON.stringify(portals)) }, [portals])
+  useEffect(() => { localStorage.setItem('vv-pinned-pages', JSON.stringify(dehydratePinnedPages(pinnedPages))) }, [pinnedPages])
+  useEffect(() => { localStorage.setItem('vv-notifications', JSON.stringify(notifications.map(n => ({ id: n.id, read: n.read })))) }, [notifications])
 
   const handleSkipOnboarding = () => {
     setShowWelcomeModal(false)
@@ -2526,18 +2709,32 @@ export default function App() {
   if (!authed) return <PasswordGate onUnlock={() => setAuthed(true)} />
 
   return (
-    <div className="flex items-center justify-center h-screen w-screen bg-[#1a1a2e] p-6">
-      <Atmosphere />
+    <div className={`flex items-center justify-center h-screen w-screen p-6 transition-colors duration-300 ${
+      effectiveTheme === 'light' ? 'bg-[#e8ecf0]' : 'bg-[#1a1a2e]'
+    }`}>
+      {effectiveTheme === 'dark' && <Atmosphere />}
 
       {/* Mac window frame */}
-      <div className="relative z-10 flex flex-col w-full h-full max-w-[1440px] max-h-[900px] rounded-xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.6)] border border-white/[0.08]">
+      <div className={`relative z-10 flex flex-col w-full h-full max-w-[1440px] max-h-[900px] rounded-xl overflow-hidden transition-colors duration-300 ${
+        effectiveTheme === 'light'
+          ? 'shadow-[0_25px_80px_rgba(0,0,0,0.12)] border border-black/[0.08]'
+          : 'shadow-[0_25px_80px_rgba(0,0,0,0.6)] border border-white/[0.08]'
+      }`}>
         {/* Title bar */}
-        <div className="h-11 bg-[#0c1019] flex items-center px-4 flex-shrink-0 border-b border-white/[0.06]">
+        <div className={`h-11 flex items-center px-4 flex-shrink-0 transition-colors duration-300 ${
+          effectiveTheme === 'light'
+            ? 'bg-[#f0f2f5] border-b border-black/[0.06]'
+            : 'bg-[#0c1019] border-b border-white/[0.06]'
+        }`}>
           <TrafficLights />
         </div>
 
         {/* App content */}
-        <div className="flex flex-1 overflow-hidden bg-[#050a14] text-gray-400">
+        <div className={`flex flex-1 overflow-hidden transition-colors duration-300 ${
+          effectiveTheme === 'light'
+            ? 'bg-[#f8f9fb] text-gray-600'
+            : 'bg-[#050a14] text-gray-400'
+        }`}>
           <Sidebar
             isCollapsed={isCollapsed}
             activePage={activePage}
@@ -2550,19 +2747,19 @@ export default function App() {
           />
 
           <main data-tour-id="content-frame" className="flex-1 flex flex-col relative min-w-0 z-10">
-            <Header activePage={activePage} onNavigate={setActivePage} pinnedPages={pinnedPages} />
+            <Header activePage={activePage} onNavigate={setActivePage} pinnedPages={pinnedPages} unreadCount={unreadNotifCount} />
 
             {activePage === 'search' ? (
               <SearchView />
             ) : activePage === 'notifications' ? (
-              <NotificationsView />
+              <NotificationsView notifications={notifications} onToggleRead={toggleNotifRead} onMarkAllRead={markAllNotifsRead} />
             ) : activePage === 'account' ? (
               <AccountView onLogout={() => { sessionStorage.removeItem('vv-auth'); setAuthed(false) }} />
             ) : activePage === 'settings' ? (
-              <SettingsView portals={portals} onAddPortal={() => setShowPortalModal(true)} onRemovePortal={removePortal} onEditPortal={editPortal} />
+              <SettingsView portals={portals} onAddPortal={() => setShowPortalModal(true)} onRemovePortal={removePortal} onEditPortal={editPortal} themeMode={themeMode} onSetThemeMode={setThemeMode} />
             ) : activePinnedPage ? (
               <div className="flex-1 flex flex-col px-6 pb-5 pt-4 overflow-hidden">
-                <BrowserControls />
+                <BrowserControls url={activePinnedPage.url} />
                 <div className="flex-1 w-full rounded-xl border border-[#30BAFF]/15 animate-glow-in iframe-container relative overflow-hidden">
                   {/* Corner accents */}
                   <div className="absolute top-0 left-0 w-8 h-px bg-gradient-to-r from-[#30BAFF]/40 to-transparent" />

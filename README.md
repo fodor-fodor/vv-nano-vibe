@@ -35,12 +35,13 @@ VV Nano is a **standalone frontend prototype** that simulates a desktop portal a
 
 ## Features
 
-- **Home** — Empty state with animated energy orb, transitions to portal thumbnail grid when portals are added
-- **Search** — Full-page search with hero bar, typeahead suggestions, filter pills, 2-column results with AI assistant panel
-- **Notifications** — Rich notification center with severity types (critical/alert/warning/info), read/unread states, AI summary sidebar
+- **Home** — Empty state with animated energy orb, transitions to portal thumbnail grid (4 varied layouts: dashboard, table, map, list)
+- **Search** — Full-page search with hero bar, typeahead suggestions, filter pills, query-filtered results with AI assistant panel
+- **Notifications** — Rich notification center with severity types (critical/alert/warning/info), persistent read/unread states, AI summary sidebar
 - **Account** — User profile, sign-in methods (email/Google/passkeys/GitHub), 2FA setup, billing, token usage charts
-- **Settings** — Theme mode selector (dark/light/system), connected portal management with inline edit/delete
-- **Pinned URL Pages** — Sidebar items that render external URLs in iframes with browser-chrome styling
+- **Settings** — Real theme switching (dark/light/system with OS preference detection), portal management with inline edit/delete
+- **Pinned URL Pages** — Sidebar items that render external URLs in iframes with dynamic URL bar showing actual hostname
+- **Persistence** — Portals, pinned pages, notification read states, and theme preference all survive page reload via localStorage
 - **Password Gate** — Session-based auth gate for demo access
 
 ## Tech Stack
@@ -52,7 +53,7 @@ VV Nano is a **standalone frontend prototype** that simulates a desktop portal a
 | Styling | Tailwind CSS v4 (`@tailwindcss/vite` plugin) |
 | Fonts | Orbitron (display) + Rajdhani (tech/body) via Google Fonts |
 | Hosting | Vercel (auto-deploy from `main`) |
-| State | React `useState` — no external state library |
+| State | React `useState` + localStorage persistence — no external state library |
 
 ## Quick Start
 
@@ -69,7 +70,7 @@ vv-nano-vibe/
 ├── public/
 │   └── vv-logo.svg          # Composed Virtual Vehicle wordmark (17 vector paths)
 ├── src/
-│   ├── App.tsx               # All components (~2074 lines, single-file architecture)
+│   ├── App.tsx               # All components (~2700 lines, single-file architecture)
 │   ├── index.css             # Tailwind + custom animations & glass effects
 │   ├── main.tsx              # React DOM entry point
 │   └── assets/               # Static assets
